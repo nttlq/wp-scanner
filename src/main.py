@@ -1,438 +1,464 @@
-import requests
+import argparse
+import configparser
+import random
 import re
-from concurrent.futures import ThreadPoolExecutor
-from bs4 import BeautifulSoup
-import concurrent.futures
-import multiprocessing
+from dataclasses import dataclass
 
+import requests
+from bs4 import BeautifulSoup
 import urllib3
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# список логинов и паролей
-logins = open("logins.txt", "r").read().split()
-passwords = open("passwords.txt", "r").read().split()
-print("logins:", logins)
-# URL для авторизации в WordPress
-login_url = "http://curse.local/wp-login.php"
+from printings import Printer
 
 
-def check_login(
-    session,
-    login,
-    password,
-):
-    # session = requests.Session()
-    data = {"log": login, "pwd": password, "wp-submit": "Log In"}
-    response = session.post(login_url, data=data)
-    temp_soup = BeautifulSoup(response.text, "html.parser")
-    # print(temp_soup.text)
-    login_error_div = temp_soup.find("div", {"id": "login_error"})
-
-    themes_url = "http://curse.local/wp-admin/themes.php"
-    response1 = session.get(themes_url, verify=False)
-    temp_soup1 = BeautifulSoup(response1.text, "html.parser")
-    themes = temp_soup1.find_all("div", class_="theme")
-    for theme in themes:
-        # print(theme)
-        # Находим тег h2 с классом "theme-name"
-        h2 = theme.find("h2", class_="theme-name")
-
-        # Получаем значение атрибута "id" и очищаем его от пробелов
-        theme_id = h2.get("id").strip()
-
-        # Получаем текст из тега h2 и очищаем его от пробелов
-        theme_name = h2.text.strip()
-        span = h2.find("span")
-        # Находим тег img внутри тега div с классом "theme-screenshot"
-        img = theme.find("div", class_="theme-screenshot").find("img")
-        # Получаем значение атрибута "src" и разделяем его по символу "="
-        src_parts = img["src"].split("=")
-
-        # Получаем последнюю часть разделенной строки, которая содержит номер версии
-        version = src_parts[-1]
-
-        print("Theme name: {}; Theme id: {}".format(theme_name, theme_id))
-        print("Version: {}".format(version))
-    if login_error_div:
-        error_message = login_error_div.text.strip()
-        print(f"Login failed with message: {error_message}")
-        session.close()
-        return False
-    else:
-        admin_bar = temp_soup.find("body").find("div", {"id": "wpadminbar"})
-        if admin_bar:
-            print(f"Successful login with {login}:{password} (admin)")
-            temp_login = login
-            temp_password = password
-            session.close()
-            return True
-        else:
-            print(f"Successful login with {login}:{password} (not admin)")
-            session.close()
-
-            return False
+@dataclass()
+class User:
+    name: str
 
 
-with requests.Session() as s:
-    check_login(s, "admin", "admin")
-# создаем пул потоков с максимальным количеством воркеров 10
-with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    # перебираем все логины
-    with requests.Session() as session:  ########################
-        for login in logins:
-            if executor._shutdown:
-                break
-            # создаем список задач для текущего логина
-            tasks = []
-            # перебираем все пароли
-            for password in passwords:
-                # добавляем задачу в список задач
-                task = executor.submit(check_login, session, login, password)
-                # добавляем задачу в список только в том случае, если все предыдущие задачи для данного логина не были выполнены
-                if not any(task.result() for task in tasks):
-                    tasks.append(task)
-
-                else:
-                    # завершаем выполнение всех задач для текущего логина, если был найден успешный логин
-                    executor.shutdown(wait=True)
-                    break
-                    # pass
+@dataclass()
+class Site:
+    url: str
+    user_agent: str
+    https: bool
 
 
-print("НАЧАЛ ПОИСК ЛЮДЕЙ")
-# URL сайта, который нужно проанализировать
-url = "http://curse.local"
-# # отправка GET-запроса на сайт и получение содержимого страницы
-response = requests.get(url + "/?rest_route=/wp/v2/users")
-# response = requests.get(url + "/wp-json/wp/v2/users")
-users = response.json()
-# print(users[0]["name"])
-
-print("[*] Found users:")  # , [user["name"] for user in users])
-for user in users:
-    print(user["name"])
-print("ЗАКОНЧИЛ ПОИСК ЛЮДЕЙ")
-soup = BeautifulSoup(response.content, "html.parser")
-
-# import requests
-
-# Create a session object
-s = requests.Session()
-
-# Define the login URL, username, and password
-login_url = "http://curse.local/wp-login.php"
-username = "admin"
-password = "12345"
-
-# Create a dictionary with the login data
-login_data = {
-    "log": username,
-    "pwd": password,
-    "wp-submit": "Войти",
-    "redirect_to": "http://curse.local/wp-admin/",
-    "testcookie": "1",
-}
-
-# Make a POST request to the login URL with the login data as the json parameter
-wp_login = "http://curse.local/wp-login.php"
-wp_admin = "http://curse.local/wp-admin/"
-username = "admin"
-password = "admin"
-
-with requests.Session() as s:
-    headers1 = {"Cookie": "wordpress_test_cookie=WP Cookie check"}
-    datas = {
-        "log": username,
-        "pwd": password,
-        "wp-submit": "Log In",
-        "redirect_to": wp_admin,
-        "testcookie": "1",
-    }
-    res = s.post(wp_login, headers=headers1, data=datas, verify=False)
-    temp_soup = BeautifulSoup(res.text, "html.parser")
-    # print(temp_soup.text)
-    login_error_div = temp_soup.find("div", {"id": "login_error"})
-    if login_error_div:
-        error_message = login_error_div.text.strip()
-        print(f"Login failed with message: {error_message}")
-        session.close()
-    else:
-        admin_bar = temp_soup.find("body").find("div", {"id": "wpadminbar"})
-        if admin_bar:
-            print(f"Successful login with {username}:{password} (admin)")
-            temp_login = login
-            temp_password = password
-            session.close()
-        else:
-            print(f"Successful login with {username}:{password} (not admin)")
-            session.close()
-
-    resp = s.get(wp_admin)
-    # print(resp.text)
-# while True:
-#    pass
-print("НАЧАЛ ПОИСК ТЕМ")
-with requests.Session() as session:  ########################
-    data = {"log": "admin", "pwd": "12345", "wp-submit": "Log In"}
-
-    session.post(login_url, data=data, verify=False)
-    themes_url = "http://curse.local/wp-admin/themes.php"
-    response = session.get(themes_url, verify=False)
-    # Используем библиотеку BeautifulSoup для парсинга HTML-страницы
-    soup = BeautifulSoup(response.text, "html.parser")
-    print(session.cookies)
-    # Находим все элементы с классом "theme" на странице
-    themes = soup.find_all("div", class_="theme")
-    for theme in themes:
-        # print(theme)
-        # Находим тег h2 с классом "theme-name"
-        h2 = theme.find("h2", class_="theme-name")
-
-        # Получаем значение атрибута "id" и очищаем его от пробелов
-        theme_id = h2.get("id").strip()
-
-        # Получаем текст из тега h2 и очищаем его от пробелов
-        theme_name = h2.text.strip()
-        span = h2.find("span")
-        # Находим тег img внутри тега div с классом "theme-screenshot"
-        img = theme.find("div", class_="theme-screenshot").find("img")
-        # Получаем значение атрибута "src" и разделяем его по символу "="
-        src_parts = img["src"].split("=")
-
-        # Получаем последнюю часть разделенной строки, которая содержит номер версии
-        version = src_parts[-1]
-
-        print("Theme name: {}; Theme id: {}".format(theme_name, theme_id))
-        print("Version: {}".format(version))
-print("ВСЕ ТЕМЫ")
-
-
-print("НАЧАЛ ПОИСК ПЛАГИНОВ")
-with requests.Session() as session:  ########################
-    data = {"log": "admin", "pwd": "12345", "wp-submit": "Log In"}
-
-    session.post(login_url, data=data, verify=False)
-    plugins_url = "http://curse.local/wp-admin/plugins.php"
-    response = session.get(plugins_url)
-    # Используем библиотеку BeautifulSoup для парсинга HTML-страницы
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    # Находим все элементы с классом "plugins" на странице
-    plugins = soup.find_all("div", class_="active second plugin-version-author-uri")
-
-    for plugin in plugins:
-        # Получение версии плагина
-        version = plugin.find(string=lambda text: "Версия" in text)
-        version = version.split(" ")[1]
-
-        # Получение названия плагина
-        plugin_name = plugin.find("a", {"class": "thickbox open-plugin-details-modal"})[
-            "data-title"
-        ]
-        headers = {
-            "Authorization": "Token token=sST2gat5Bnsv9mGnUjD4zugVhRMByqmBt6eYOaOXMxc"
-        }
-        vulnerabilities_url = "https://wpscan.com/api/v3/plugins/"
-        # x='1-flash-gallery'
-        vulnerability_respons = requests.get(vulnerabilities_url, headers=headers)
-        # print(vulnerability_respons.text)
-        # проверка каждого найденного плагина на наличие уязвимостей
-        vulnerability_response = requests.get(
-            vulnerabilities_url + plugin_name.replace(" ", "-").lower(), headers=headers
-        )
-
-        if vulnerability_response:
-            vulnerabilities = vulnerability_response.json()
-            vulnerabilities = vulnerabilities[plugin_name.replace(" ", "-").lower()]
-            if "error" in vulnerabilities:
-                print(f'[-] Error: {vulnerabilities["error"]}')
-            if vulnerabilities["vulnerabilities"]:
-                print(
-                    f'[!] Found {vulnerabilities["vulnerabilities"]} vulnerabilities in plugin {plugin_name.replace(" ","-").lower()}'
-                )
-                for vulnerability in vulnerabilities["data"]:
-                    print(f'    - {vulnerability["title"]}')
-            #
-            else:
-                print(
-                    f'[!] No vulnerabilities found in plugin {plugin_name.replace(" ", "-")}'
-                )
-
-        print("Plugin name: {}".format(plugin_name))
-        print("Version: {}".format(version))
-print("ВСЕ ПЛАГИНЫ")
-
-
-print("Проверка на наличие")
-# Все что выше работает
-url = "http://curse.local"
-response = requests.get(url)
-html = response.content
-soup = BeautifulSoup(html, "html.parser")
-inputs = soup.find_all("input")
-if inputs == []:
-    print("Нет символов для SQl инекции")
-
-for input in inputs:
-    if "type" in input.attrs and input.attrs["type"] == "text":
-        name = input.attrs["name"]
-        value = input.attrs["value"]
-        # Проверяем, есть ли в значении поля какие-то необычные символы, которые могут быть использованы для инъекций
-        if value and not value.isnumeric() and not value.isalpha():
+class Scanner:
+    def __init__(self, url: str, user_agent: str = "rand", https: bool = False) -> None:
+        self.__url: str = self.__check_url_integrity(url)
+        self.__user_agent: str = self.__set_user_agent(user_agent)
+        self.__http_ver: bool = https
+        self.__version = None
+        self.users = set()
+        if self.__is_wp() is False:
+            raise NameError(f"The site {self.url} is not on WordPress engine.")
+        if self.__is_installed() is False:
             print(
-                f"Possible SQL injection vulnerability in input field {name} with value {value}"
+                "The Website is not fully configured and currently in install mode. Call it to create a new admin user."
             )
 
+    @property
+    def version(self) -> str:
+        return self.__version
 
-# поиск всех ссылок на странице
+    @version.setter
+    def version(self, version: str) -> None:
+        self.__version = version
+
+    @property
+    def url(self) -> str:
+        complete_url = self.http_ver + self.__url + "/"
+        return complete_url
+
+    @Printer.info
+    def print_user_agent(self) -> str:
+        return self.__user_agent
+
+    @property
+    def user_agent(self) -> str:
+        return self.__user_agent
+
+    @property
+    def http_ver(self) -> str:
+        if self.__http_ver is True:
+            return "https://"
+        else:
+            return "http://"
+
+    def __check_url_integrity(self, url):
+
+        url = url.lower()
+
+        if url.startswith("http://"):
+            url = url[7:]
+            self.__http_ver = False
+        elif url.startswith("https://"):
+            url = url[8:]
+            self.__http_ver = True
+
+        valid_domains = (".com", ".ru", ".local")
+        if not any(url.endswith(domain) for domain in valid_domains):
+            raise ValueError(f"URL must end with {valid_domains}")
+
+        return url
+
+    def __set_user_agent(self, system: str):
+        config = configparser.ConfigParser()
+        config.read("src/db/user-agents.ini")
+
+        if system == "rand":
+            system = random.choice(["win", "mac", "linux", "ipad", "iphone"])
+
+        random_user_agent = random.choice(config.options(system))
+
+        user_agent = config.get(system, random_user_agent)
+
+        return user_agent
+
+    def __is_wp(self) -> bool:
+        res = requests.get(
+            self.url, headers={"User-Agent": self.__user_agent}, verify=False
+        )
+        if not "wp-" in res.text:
+            return False
+        else:
+            return True
+
+    def is_readme(self):
+        r = requests.get(
+            self.url + "readme.html",
+            headers={"User-Agent": self.__user_agent},
+            verify=False,
+        )
+
+        if "200" in str(r):
+            # self.files.add("readme.html")
+
+            # Basic version fingerprinting
+            regex = "Version (.*)"
+            regex = re.compile(regex)
+            matches = regex.findall(r.text)
+
+            if len(matches) > 0 and matches[0] != None and matches[0] != "":
+                self.version = matches[0]
+                print(
+                    "The Wordpress '%s' file exposing a version number: %s"
+                    % (self.url + "readme.html", matches[0])
+                )
+            else:
+                print(
+                    "The Wordpress '%s' file is exposing a version number but it is not in the expected format"
+                    % (self.url + "readme.html")
+                )
+            # print(r.text)
+
+    def __is_installed(self):
+        try:
+            res = requests.get(
+                self.url,
+                allow_redirects=False,
+                headers={"User-Agent": self.__user_agent},
+                verify=False,
+            )
+
+            if "location" not in res.headers:
+                return True
+            header = str(res.headers["location"])
+            # print(header)
+
+            if "wp-admin/setup-config.php" in header:
+                return False
+                #    "The Website is not fully configured and currently in install mode. Call it to create a new admin user."
+
+        except Exception as e:
+            print(e)
+            exit()
+
+    def is_backup_file(self):
+        backup = [
+            "wp-config.php~",
+            "wp-config.php.save",
+            ".wp-config.php.bck",
+            "wp-config.php.bck",
+            ".wp-config.php.swp",
+            "wp-config.php.swp",
+            "wp-config.php.swo",
+            "wp-config.php_bak",
+            "wp-config.bak",
+            "wp-config.php.bak",
+            "wp-config.save",
+            "wp-config.old",
+            "wp-config.php.old",
+            "wp-config.php.orig",
+            "wp-config.orig",
+            "wp-config.php.original",
+            "wp-config.original",
+            "wp-config.txt",
+            "wp-config.php.txt",
+            "wp-config.backup",
+            "wp-config.php.backup",
+            "wp-config.copy",
+            "wp-config.php.copy",
+            "wp-config.tmp",
+            "wp-config.php.tmp",
+            "wp-config.zip",
+            "wp-config.php.zip",
+            "wp-config.db",
+            "wp-config.php.db",
+            "wp-config.dat",
+            "wp-config.php.dat",
+            "wp-config.tar.gz",
+            "wp-config.php.tar.gz",
+            "wp-config.back",
+            "wp-config.php.back",
+            "wp-config.test",
+            "wp-config.php.test",
+            "wp-config.php.1",
+            "wp-config.php.2",
+            "wp-config.php.3",
+            "wp-config.php._inc",
+            "wp-config_inc",
+            "wp-config.php.SAVE",
+            ".wp-config.php.BCK",
+            "wp-config.php.BCK",
+            ".wp-config.php.SWP",
+            "wp-config.php.SWP",
+            "wp-config.php.SWO",
+            "wp-config.php_BAK",
+            "wp-config.BAK",
+            "wp-config.php.BAK",
+            "wp-config.SAVE",
+            "wp-config.OLD",
+            "wp-config.php.OLD",
+            "wp-config.php.ORIG",
+            "wp-config.ORIG",
+            "wp-config.php.ORIGINAL",
+            "wp-config.ORIGINAL",
+            "wp-config.TXT",
+            "wp-config.php.TXT",
+            "wp-config.BACKUP",
+            "wp-config.php.BACKUP",
+            "wp-config.COPY",
+            "wp-config.php.COPY",
+            "wp-config.TMP",
+            "wp-config.php.TMP",
+            "wp-config.ZIP",
+            "wp-config.php.ZIP",
+            "wp-config.DB",
+            "wp-config.php.DB",
+            "wp-config.DAT",
+            "wp-config.php.DAT",
+            "wp-config.TAR.GZ",
+            "wp-config.php.TAR.GZ",
+            "wp-config.BACK",
+            "wp-config.php.BACK",
+            "wp-config.TEST",
+            "wp-config.php.TEST",
+            "wp-config.php._INC",
+            "wp-config_INC",
+        ]
+
+        for b in backup:
+            r = requests.get(
+                self.url + b, headers={"User-Agent": self.__user_agent}, verify=False
+            )
+            if "200" in str(r) and not "404" in r.text:
+                # self.files.add(b)
+                print(
+                    "A wp-config.php backup file has been found in: %s" % (self.url + b)
+                )
+
+    def fingerprint_wp_version_feed_based(self):
+        r = requests.get(
+            self.url + "index.php/feed",
+            headers={"User-Agent": self.__user_agent},
+            verify=False,
+        ).text
+        regex = re.compile("generator>https://wordpress.org/\?v=(.*?)<\/generator")
+        match = regex.findall(r)
+        if match != []:
+            self.version = match[0]
+            print(
+                "WordPress version %s identified from advanced fingerprinting"
+                % self.version
+            )
+            return True
+        return False
 
 
-# ntvs
-# for link in soup.find_all('a'):
-#     href = link.get('href')
-#     print(href)
-#     print("____________________")
-#     if href:
-#         if 'wp-json/wp/v2/users' in href:  # если на странице есть ссылка на REST API WordPress
-#             user_response = requests.get(href)
-#             users = user_response.json()
-#             print(users)
-#             print('[*] Found users: ', [user['name'] for user in users])  # вывод имен найденных пользователей
-#         elif '/wp-content/themes/' in href:  # если на странице есть ссылка на тему WordPress
-#             theme_name = href.split('/wp-content/themes/')[1].split('/')[0]  # извлечение названия темы
-#             print('[*] Found theme:', theme_name)  # вывод названия найденной темы
+def test():
+    # Read user agents from the ini file
+    config = configparser.ConfigParser()
+    config.read("src/db/user-agents.ini")
+
+    user_agent2 = random.choice(config.options("Mac"))
+    user_agent = config.get("Windows", user_agent2)
+    # user_agents = config["Windows"]
+    print(user_agent)
+    print("UA2: ", user_agent2)
+    print("Type: ", type(user_agent))
+    # Select a random user agent
+    # user_agent_list = user_agent.split("\n")
+    # random_user_agent = random.choice(user_agent_list)
+
+    # print(random_user_agent)
+
+    wp_login = "http://curse.local/wp-login.php"
+    wp_admin = "http://curse.local/wp-admin/"
+    username = "admin"
+    password = "admin"
+
+    with requests.Session() as s:
+        headers1 = {f"User-Agent: {user_agent}"}
+        # print(headers1)
+        datas = {
+            "log": username,
+            "pwd": password,
+            "wp-submit": "Log In",
+            "redirect_to": wp_admin,
+        }
+        res = s.post(wp_login, json=headers1, data=datas, verify=False)
+        temp_soup = BeautifulSoup(res.text, "html.parser")
+        # print(temp_soup.text)
+        print(res.status_code)
+        # print(res.headers)
 
 
-#
-# print("НАЧАЛ ПОИСК ТЕМ")
-# # URL базы данных уязвимостей тем WordPress
-# vulnerabilities_url = 'https://wpscan.com/themes'
-#
-# # проверка каждой найденной темы на наличие уязвимостей
-# for link in soup.find_all('a'):
-#     href = link.get('href')
-#     if '/wp-content/themes/' in href:
-#          theme_name = href.split('/wp-content/themes/')[1].split('/')[0]
-#          vulnerability_response = requests.get(vulnerabilities_url + theme_name)
-#          vulnerabilities = vulnerability_response.json()
-#          if 'error' in vulnerabilities:
-#              print(f'[-] Error: {vulnerabilities["error"]}')
-#          elif vulnerabilities['total'] > 0:
-#              print(f'[!] Found {vulnerabilities["total"]} vulnerabilities in theme {theme_name}')
-#              for vulnerability in vulnerabilities['data']:
-#                   print(f'    - {vulnerability["title"]}')
-#
-# # URL сайта, который нужно проанализировать
-# print("НАЧАЛ ПОИСК СОДЕРЖИМОГО")
-#
-# response = requests.get(url)
-# soup = BeautifulSoup(response.content, 'html.parser')
-#
-# # поиск всех ссылок на странице
-# for link in soup.find_all('link'):
-#     href = link.get('href')
-#     if 'plugins' in href:
-#         plugin_name = href.split('/plugins/')[1].split('/')[0]  # извлечение названия плагина
-#         plugin_response = requests.get(href)
-#         plugin_soup = BeautifulSoup(plugin_response.content, 'html.parser')
-#         plugin_version = plugin_soup.find('span', {'class': 'plugin-version-author-uri'}).text.split(' ')[1]  # извлечение версии плагина
-#         print(f'[*] Found plugin: {plugin_name} (version: {plugin_version})')  # вывод названия и версии найденного плагина
-# print("НАЧАЛ ПОИСК ПЛАГИНОВ")
-# # URL базы данных уязвимостей плагинов WordPress
-# vulnerabilities_url = 'https://wpscan.com/plugins'
-#
-# # проверка каждого найденного плагина на наличие уязвимостей
-# if 'plugins' in href:
-#     plugin_name = href.split('/plugins/')[1].split('/')[0]
-#     vulnerability_response = requests.get(vulnerabilities_url + plugin_name)
-#     vulnerabilities = vulnerability_response.json()
-#     if 'error' in vulnerabilities:
-#         print(f'[-] Error: {vulnerabilities["error"]}')
-#     elif vulnerabilities['total'] > 0:
-#         print(f'[!] Found {vulnerabilities["total"]} vulnerabilities in plugin {plugin_name}')
-#         for vulnerability in vulnerabilities['data']:
-#             print(f'    - {vulnerability["title"]}')
-# print("все")
-#
-#
-#
-# response = requests.get(url)
-# soup = BeautifulSoup(response.content, 'html.parser')
-#
-# plugins = []
-#
-# for script_tag in soup.find_all('script'):
-#     if script_tag.get('src') and 'plugins' in script_tag.get('src'):
-#         plugins.append(script_tag.get('src'))
-#
-# print('Found plugins: ', plugins)
-#
-#
-#
-# url = 'http://curse.local/wp-content/plugins/akismet/'
-# response = requests.get(url)
-#
-# pattern = r'Version: (\d+\.\d+(\.\d+)?)'
-# match = re.search(pattern, response.text)
-#
-# if match:
-#     print('Found version: ', match.group(1))
-# else:
-#     print('Version not found.')
+# args.user_agent = random_user_agent
+
+# Use the selected user agent for scanning the site
+# Your code for scanning the site goes here
 
 
-# Отправляем GET запрос на главную страницу сайта
-# response = requests.get(url)
-#
-# # Парсим HTML страницу с помощью BeautifulSoup
-# soup = BeautifulSoup(response.text, "html.parser")
-#
-# # Ищем тег <link> с атрибутом rel="stylesheet"
-# stylesheets = soup.find_all("link", {"rel": "stylesheet"})
-#
-# # Ищем тег <script> с атрибутом src, содержащим "plugins"
-# plugins = soup.find_all("script", {"src": lambda src: "plugins" in src})
-#
-# # Ищем тег <script> с атрибутом src, содержащим "jquery"
-# jquery = soup.find_all("script", {"src": lambda src: "jquery" in src})
-#
-# # Выводим результаты
-# print("Стили:")
-# for stylesheet in stylesheets:
-#     print(stylesheet.get("href"))
-#
-# print("Плагины:")
-# for plugin in plugins:
-#     print(plugin.get("src"))
-#
-# print("jQuery:")
-# for jq in jquery:
-#     print(jq.get("src"))
+def parser():
+    parser = argparse.ArgumentParser(description="Process of scanning a wp site.")
+    parser.add_argument(
+        "url",
+        metavar="URL",
+        type=str,
+        nargs=1,
+        help="The URL of the site to scan.",
+    )
+
+    user_agents = ("rand", "win", "mac", "linux", "ipad", "iphone")
+    parser.add_argument(
+        "--user_agent",
+        "-u",
+        dest="user_agent",
+        type=str,
+        choices=user_agents,
+        default=user_agents[0],
+        nargs=1,
+        help="The user agent to use when scanning the site.",
+    )
+
+    parser.add_argument(
+        "--https",
+        "-s",
+        action="store_true",
+        dest="https",
+        default=False,
+        help="Use https when scanning the site.",
+    )
+
+    args = parser.parse_args()
+    return args
 
 
-# from wordpress_xmlrpc import Client
-# from wordpress_xmlrpc.methods import themes
-#
-#
-# def get_all_themes(url, username, password):
-#     wp = Client(url + 'xmlrpc.php', username, password)
-#     all_themes = wp.call(themes.GetThemes())
-#     return all_themes
-#
-#
-# def get_vulnerable_themes(url, username, password):
-#     all_themes = get_all_themes(url, username, password)
-#     vulnerable_themes = []
-#     for theme in all_themes:
-#         if theme.version in vulnerable_themes:
-#             continue
-#         # проверка на уязвимости темы
-#         if is_vulnerable(theme):
-#             vulnerable_themes.append(theme.version)
-#     return vulnerable_themes
-#
-#
-# def is_vulnerable(theme):
-#     # проверка на уязвимости темы
-#     return False  # замените на свою функцию проверки уязвимости
+def main():
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    args = parser()
+
+    url = args.url[0]
+
+    if type(args.user_agent) == list:
+        user_agent = args.user_agent[0]
+    else:
+        user_agent = args.user_agent
+
+    sc = Scanner(url, user_agent, args.https)
+    print(sc.url)
+    print(sc.user_agent)
+    sc.fingerprint_wp_version_feed_based()
+    print(Menu.options())
+
+    t = input("promt: ")
+    print("T :", t)
+    # sc.is_readme()
+    # sc.is_up_and_installed()
+    # is_wordpress(url=protocol + url, agent=user_agent, nocheck=False)
+
+
+def database_update():
+    print("\033[93mUpdating database\033[92m - Last update: \033[0m")
+    update_url = "https://data.wpscan.org/"
+    update_files = [
+        "local_vulnerable_files.xml",
+        "local_vulnerable_files.xsd",
+        "timthumbs.txt",
+        "user-agents.txt",
+        "wp_versions.xml",
+        "wp_versions.xsd",
+        "wordpresses.json",
+        "plugins.json",
+        "themes.json",
+    ]
+
+    for f in update_files:
+        print("\t\033[93mDownloading \033[0m" + f + " \033[92mFile updated !\033[0m")
+        download_file(update_url + f, "database/" + f, True)
+
+    unzip_file("database/user-agents.txt")
+    unzip_file("database/timthumbs.txt")
+
+
+def download_raw_file(url, filename, verbosity):
+    try:
+
+        # Open the request
+        source = requests.get(url, stream=True).raw
+
+        # Write the file
+        with open(filename, "wb+") as ddl_file:
+            progress = 0
+            while True:
+                length = 16 * 1024
+                buf = source.read(length)
+                if not buf:
+                    break
+                ddl_file.write(buf)
+                progress += len(buf)
+
+                if verbosity == True:
+                    print(
+                        "\tDownloaded : %.2f Mo\r" % (float(progress) / (1024 * 1024))
+                    ),
+
+    except Exception as e:
+        raise e
+
+
+def download_file(url, filename, verbosity):
+    try:
+
+        # Open the request
+        source = requests.get(url).text
+
+        # Write the file
+        with open(filename, "wb") as ddl_file:
+            ddl_file.write(source.encode("utf8"))
+
+    except Exception as e:
+        raise e
+
+
+import os
+
+
+def unzip_file(filename):
+    with open(filename, "r") as f:
+        data = f.read()
+
+    # Check for a buggy .gz
+    if not "/timthumb.php" in data and not "Mozilla/5.0" in data:
+        os.system("mv " + filename + " " + filename + ".gz")
+        os.system("gzip -d " + filename + ".gz")
+
+
+class Menu:
+    @staticmethod
+    @Printer.info
+    def options() -> str:
+        string = ""
+        string += "OPTIONS" + "\n"
+        string += "[1] Brutforce" "\n"
+        string += "[2] Change User-Agent" "\n"
+        string += "[3] Show Stats" "\n"
+        return string
+
+
+if __name__ == "__main__":
+    # database_update()
+    Printer.print_all()
+    main()
