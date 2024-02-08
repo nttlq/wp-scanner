@@ -90,13 +90,21 @@ class WPS_API:
             raise RateLimitExceededError("NO REQUESTS REMAINING")
         return True
 
+    def __check_status_code(self, status_code) -> bool:
+        if status_code != 200:
+            if status_code == 429:
+                raise TooManyRequestsError("TOO MANY REQUESTS")
+            if status_code == 401:
+                raise AuthenticationError("TOKEN EXPIRED OR INVALID")
+
+        return True
+
     def __get_req_remaining(self) -> int:
         slug: str = "status"
         get_status_url: str = self.url + slug
         response = requests.get(get_status_url, headers=self.header)
 
-        if response.status_code != 200:
-            raise AuthenticationError("TOKEN EXPIRED OR INVALID")
+        self.__check_status_code(response.status_code)
 
         result: str = response.text
         result: dict = json.loads(result)
@@ -104,18 +112,58 @@ class WPS_API:
 
         return result
 
-    def get_vulnerabilities_by_wp_version(self, version: int) -> dict:
+    def get_vulnerabilities_by_wp_version(self, version: int) -> list[dict]:
         slug: str = f"wordpresses/{version}"
         get_vulnerabilities_url: str = self.url + slug
         response = requests.get(get_vulnerabilities_url, headers=self.header)
 
-        if response.status_code != 200:
-            raise TooManyRequestsError("TOO MANY REQUESTS")
+        self.__check_status_code(response.status_code)
+
+        result: str = response.text
+        result: dict = json.loads(result)
+        for _, info in result.items():
+            vulnerabilities = info.get("vulnerabilities", [])
+
+        return vulnerabilities
+
+    def get_vulnerabilities_by_plugin(self, plugin: str) -> list[dict]:
+        slug: str = f"plugins/{plugin}"
+        get_vulnerabilities_url: str = self.url + slug
+        response = requests.get(get_vulnerabilities_url, headers=self.header)
+
+        self.__check_status_code(response.status_code)
 
         result: str = response.text
         result: dict = json.loads(result)
 
-        return result
+        print(result)
+
+        if result.get("status") == "plugin not found":
+            raise ValueError("PLUGIN NOT FOUND")
+
+        for _, info in result.items():
+            vulnerabilities = info.get("vulnerabilities", [])
+
+        return vulnerabilities
+
+    def get_vulnerabilities_by_theme(self, theme: str) -> list[dict]:
+        slug: str = f"themes/{theme}"
+        get_vulnerabilities_url: str = self.url + slug
+        response = requests.get(get_vulnerabilities_url, headers=self.header)
+
+        self.__check_status_code(response.status_code)
+
+        result: str = response.text
+        result: dict = json.loads(result)
+        print(result)
+
+        if result.get("status") == "theme not found":
+            raise ValueError("THEME NOT FOUND")
+
+        for _, info in result.items():
+            vulnerabilities = info.get("vulnerabilities", [])
+
+        return vulnerabilities
 
 
 class MissingTokenError(Exception):
@@ -134,12 +182,40 @@ class AuthenticationError(Exception):
     pass
 
 
+class Saver:
+    def __init__(self, url):
+        self.__folder_path = self.set_folder(url)
+        self.__create_folder()
+
+    def set_folder(self, url):
+        folder_path = f"src/public/{url}"
+        return folder_path
+
+    @property
+    def folder_path(self):
+        return self.__folder_path
+
+    def __create_folder(self):
+        print(self.folder_path)
+        try:
+            os.mkdir(self.folder_path)
+        except TypeError:
+            print("Invalid path")
+        except FileExistsError:
+            print("Folder already exists")
+
+        return True
+
+
 if __name__ == "__main__":
     dotenv_path = Path("src/.env")
     load_dotenv(dotenv_path=dotenv_path)
     wps = WPS_API()
     print(wps.token)
     print(wps.req_remaining)
+    sv = Saver("curse.local")
+    print(sv.folder_path)
+    # print(wps.get_vulnerabilities_by_wp_version(643))
 
 
 def test():
