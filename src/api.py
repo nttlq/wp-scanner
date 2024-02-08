@@ -206,6 +206,17 @@ class Saver:
 
         return True
 
+    def create_file(self, file_name):
+        file_path = f"{self.folder_path}/{file_name}"
+        with open(file_path, "w") as file:
+            file.write("")
+        return True
+
+    def save_file(self, file_name, file_content):
+        with open(self.file_path, "w") as file:
+            file.write(file_content)
+        return True
+
 
 if __name__ == "__main__":
     dotenv_path = Path("src/.env")
