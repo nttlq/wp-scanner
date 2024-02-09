@@ -50,8 +50,8 @@ import urllib3
 
 
 class WPS_API:
-    def __init__(self):
-        self.__token: str = self.__get_token()
+    def __init__(self, token=None):
+        self.__token: str = self.__get_token(token)
         self.__url: str = "https://wpscan.com/api/v3/"
         self.__header = self.__set_header()
         self.__req_remaining = self.__get_req_remaining()
@@ -74,7 +74,10 @@ class WPS_API:
     def token(self) -> str:
         return self.__token
 
-    def __get_token(self) -> str:
+    def __get_token(self, token: str) -> str:
+        if token is not None:
+            # TODO: check token validation
+            return token
         token: str = os.environ.get("WPS_API_TOKEN")
         if not token:
             raise MissingTokenError("TOKEN NOT FOUND")
@@ -114,8 +117,8 @@ class WPS_API:
 
     def get_vulnerabilities_by_wp_version(self, version: int) -> list[dict]:
         slug: str = f"wordpresses/{version}"
-        get_vulnerabilities_url: str = self.url + slug
-        response = requests.get(get_vulnerabilities_url, headers=self.header)
+        url: str = self.url + slug
+        response = requests.get(url, headers=self.header)
 
         self.__check_status_code(response.status_code)
 
@@ -128,8 +131,8 @@ class WPS_API:
 
     def get_vulnerabilities_by_plugin(self, plugin: str) -> list[dict]:
         slug: str = f"plugins/{plugin}"
-        get_vulnerabilities_url: str = self.url + slug
-        response = requests.get(get_vulnerabilities_url, headers=self.header)
+        url: str = self.url + slug
+        response = requests.get(url, headers=self.header)
 
         self.__check_status_code(response.status_code)
 
@@ -148,8 +151,8 @@ class WPS_API:
 
     def get_vulnerabilities_by_theme(self, theme: str) -> list[dict]:
         slug: str = f"themes/{theme}"
-        get_vulnerabilities_url: str = self.url + slug
-        response = requests.get(get_vulnerabilities_url, headers=self.header)
+        url: str = self.url + slug
+        response = requests.get(url, headers=self.header)
 
         self.__check_status_code(response.status_code)
 
