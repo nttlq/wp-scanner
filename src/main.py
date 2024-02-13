@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import urllib3
+from dotenv import load_dotenv
 
 from utils.printings import Printer
 from utils.ags_parser import parser
@@ -9,8 +12,6 @@ from controllers.brute_force import Bruteforce
 from controllers.wps_api import WpsApi
 
 from views.menu import Menu
-
-##########################################
 
 
 def start_application():
@@ -26,34 +27,22 @@ def start_application():
         user_agent = args.user_agent
 
     wp_site = WpSite(url, user_agent, args.https)
-    bruteforce = Bruteforce(wp_site)
+    brute_force = Bruteforce(wp_site)
     wps_api = WpsApi()
     file_manager = FileManager(wp_site)
-    print(wp_site.url)
-    print(wp_site.user_agent)
-    wp_site.detect_wp_version()
-    print("WP version: ", wp_site.wp_version)
-    wp_site.detect_themes()
-    print("Themes: ", wp_site.themes)
-    wp_site.detect_plugins()
-    print("Plugins: ", wp_site.plugins)
-    # print(Menu.options())
+    menu = Menu(wp_site, brute_force, wps_api)
 
-    logins = open("src/db/logins.txt", "r").read().split()
-    passwords = open("src/db/passwords.txt", "r").read().split()
-    # logins = ("user2",)
-    # passwords = ("12345",)
-    bruteforce.bruteforce(logins, passwords)
-    print("Admin: ", bruteforce.admin)
-    print("Logins: ", wp_site.logins)
-    print("Users: ", wp_site.users)
+    menu.parse_input()
 
-    # t = input("promt: ")
-    # print("T :", t)
 
-    # wp_site.is_readme()
+# TODO: scanner portov
+def main():
+    dotenv_path = Path("src/.env")
+    load_dotenv(dotenv_path=dotenv_path)
+    print(Printer.hello())
+    start_application()
+    print(Printer.author())
 
 
 if __name__ == "__main__":
-    Printer.print_all()
-    # start_application()
+    main()

@@ -1,8 +1,6 @@
 import os
 import json
-from pathlib import Path
 
-from dotenv import load_dotenv
 import requests
 
 
@@ -101,7 +99,8 @@ class WpsApi:
         result: dict = json.loads(result)
 
         if result.get("status") == "plugin not found":
-            raise ValueError("PLUGIN NOT FOUND")
+            return None
+            # raise ValueError("PLUGIN NOT FOUND")
 
         for _, info in result.items():
             vulnerabilities = info.get("vulnerabilities", [])
@@ -119,7 +118,8 @@ class WpsApi:
         result: dict = json.loads(result)
 
         if result.get("status") == "theme not found":
-            raise ValueError("THEME NOT FOUND")
+            return None
+            # raise ValueError("THEME NOT FOUND")
 
         for _, info in result.items():
             vulnerabilities = info.get("vulnerabilities", [])
@@ -157,6 +157,9 @@ class AuthenticationError(Exception):
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+    from pathlib import Path
+
     dotenv_path = Path("src/.env")
     load_dotenv(dotenv_path=dotenv_path)
     wps = WpsApi()
@@ -164,4 +167,6 @@ if __name__ == "__main__":
     print(wps.requests_to_api_remaining)
     # sv = Saver("curse.local")
     # print(sv.folder_path)
-    # print(wps.get_vulnerabilities_by_wp_version(643))
+    theme = "wpengine-magazine"
+    plugin = "wpengine-tag-manager"
+    print(wps.get_vulnerabilities_by_plugin(plugin))

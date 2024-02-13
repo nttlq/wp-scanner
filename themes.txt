@@ -59,3 +59,5 @@ GET
 https://wpscan.com/profile/
 
 """
+
+sci-space ai-detector

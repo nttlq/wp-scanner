@@ -17,13 +17,14 @@ class FileManager:
         return self.__folder_path
 
     def __create_folder(self):
-        print(self.folder_path)
+        # print(self.folder_path)
         try:
             os.mkdir(self.folder_path)
         except TypeError:
-            print("Invalid path")
+            raise NotADirectoryError("Invalid path")
         except FileExistsError:
-            print("Folder already exists")
+            pass
+            # print("Folder already exists")
 
         return True
 
