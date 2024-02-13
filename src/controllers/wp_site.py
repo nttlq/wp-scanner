@@ -88,6 +88,9 @@ class WpSite:
 
         url = url.lower()
 
+        if url.endswith("/"):
+            url = url[:-1]
+
         if url.startswith("http://"):
             url = url[7:]
             self.__http_ver = False
@@ -172,15 +175,19 @@ class WpSite:
         res = requests.get(
             self.url + slug[0],
             headers={"User-Agent": self.user_agent},
+            allow_redirects=False,
             verify=False,
         )
-
         if res.status_code != 200:
             res = requests.get(
                 self.url + slug[1],
                 headers={"User-Agent": self.user_agent},
+                allow_redirects=False,
                 verify=False,
             )
+
+        if res.status_code != 200:
+            return False
 
         users = res.json()
         if users == []:
@@ -375,15 +382,17 @@ class WpSite:
 
             # yield False
 
-    def is_xml_rpc(self) -> None:
-        r = requests.get(
-            self.url + "xmlrpc.php",
+    def detect_xml_rpc(self) -> bool:
+        slug: str = "xmlrpc.php"
+        res = requests.get(
+            self.url + slug,
             headers={"User-Agent": self.__user_agent},
             verify=False,
         )
-        if r.status_code == 405:
+        if res.status_code == 405:
             self.add_file("xmlrpc.php")
-            print("XML-RPC Interface available under: %s " % (self.url + "xmlrpc.php"))
+            return True
+        return False
 
     def is_debug_log(self):
         r = requests.get(
@@ -494,12 +503,12 @@ if __name__ == "__main__":
     import urllib3
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-    sc = WpSite("https://torquemag.io")
+    site = ("https://dfiles.ru/", "https://torquemag.io")
+    sc = WpSite(site[0])
     sc.detect_users()
     sc.is_directory_listing()
     sc.is_xml_rpc()
     sc.is_debug_log()
     sc.detect_robots_file()
-    # sc.is_backup_file()
+    sc.is_backup_file()
     print(sc.files)
