@@ -1,0 +1,10 @@
+Report
+URL: http://dfiles.ru/
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/534.27 (KHTML, like Gecko) Chrome/12.0.712.0 Safari/534.27
+WP version: None
+Themes: {}
+Plugins: {}
+Logins: {}
+Users: []
+Files: {'readme.html', 'robots.txt'}
+Requests to API remaining: 25

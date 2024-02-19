@@ -30,7 +30,7 @@ def start_application():
     brute_force = Bruteforce(wp_site)
     wps_api = WpsApi()
     file_manager = FileManager(wp_site)
-    menu = Menu(wp_site, brute_force, wps_api)
+    menu = Menu(wp_site, brute_force, wps_api, file_manager)
 
     menu.parse_input()
 

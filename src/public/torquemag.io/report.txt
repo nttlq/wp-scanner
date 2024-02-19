@@ -1,0 +1,10 @@
+Report
+URL: http://torquemag.io/
+User-Agent: Mozilla/5.0 (iPad; CPU OS 7_0_4 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B554a Safari/9537.53
+WP version: None
+Themes: {'wpengine-magazine': None}
+Plugins: {'genesis-blocks': [], 'wpengine-privacy-consent': None, 'wpengine-blocks': None, 'wpengine-tag-manager': None}
+Logins: {}
+Users: []
+Files: {'robots.txt'}
+Requests to API remaining: 25

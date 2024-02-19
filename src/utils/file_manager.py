@@ -6,6 +6,7 @@ class FileManager:
     def __init__(self, scanner):
         self.__folder_path = self.set_folder(scanner.url)
         self.__create_folder()
+        self.create_file("report.txt")
 
     def set_folder(self, url: str):
         url = urlparse(url).netloc
@@ -35,6 +36,7 @@ class FileManager:
         return True
 
     def save_file(self, file_name, file_content):
-        with open(self.file_path, "w") as file:
+        file_path = f"{self.folder_path}/{file_name}"
+        with open(file_path, "w") as file:
             file.write(file_content)
         return True
