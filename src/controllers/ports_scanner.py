@@ -2,6 +2,7 @@ import sys
 import socket
 from datetime import datetime
 from ipaddress import ip_address
+from urllib.parse import urlparse, urlunparse
 
 import pyfiglet
 
@@ -9,21 +10,26 @@ import pyfiglet
 class PortScanner:
     def __init__(self, wp_site):
         self.__url: str = wp_site.url
+        self.ips = wp_site.ips
+        self.ports = wp_site.ports
         self.ips = self.get_ips()
-        self.ports = {}
+        # self.ips.append(ips)
 
     @property
     def url(self):
-        return self.__url
+        url = urlparse(self.__url).netloc
+        return url
 
     def is_private_ip(self, IP: str) -> bool:
         return True if (ip_address(IP).is_private) else False
 
     def get_ips(self) -> list:
+        print("URL: ", self.url)
         try:
             ips = socket.gethostbyname_ex(self.url)
         except socket.gaierror:
             ips = []
+        print("IPs: ", ips)
         return ips[2]
 
     def banner_grabbing(self, ip, port):
@@ -155,12 +161,16 @@ class PortScanner:
 
 class WP:
     def __init__(self) -> None:
-        self.url = "dfiles.ru"  # "curse.local"
+        self.url = "https://curse.local/"  # "curse.local"
+        self.ports = {}
 
 
 if __name__ == "__main__":
     wp_site = WP()
-
+    ports = "80 35 22"
+    # port = ports.split(" ")
+    port = [int(p) for p in ports.split(" ")]
+    print("Port: ", port)
     site = ("dfiles.ru", "torquemag.io")
 
     ps = PortScanner(wp_site)

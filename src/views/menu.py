@@ -2,10 +2,13 @@ from utils.printings import Printer
 
 
 class Menu:
-    def __init__(self, wp_site, brute_force, wps_api, file_manager) -> None:
+    def __init__(
+        self, wp_site, brute_force, wps_api, ports_scanner, file_manager
+    ) -> None:
         self.wp_site = wp_site
         self.brute_force = brute_force
         self.wps_api = wps_api
+        self.ports_scanner = ports_scanner
         self.file_manager = file_manager
 
     @staticmethod
@@ -16,7 +19,8 @@ class Menu:
         string += "[1] Scan" "\n"
         string += "[2] Brutforce" "\n"
         string += "[3] Check vulnerabilities" "\n"
-        string += "[4] Show Report" "\n"
+        string += "[4] Scan ports" "\n"
+        string += "[5] Show Report" "\n"
         string += "[exit]"
         return string
 
@@ -31,11 +35,19 @@ class Menu:
             elif option == "3":
                 self.check_vulnerabilities()
             elif option == "4":
+                ports = input("Choose an ports: ")
+                self.scan_ports(ports)
+            elif option == "5":
                 self.show_report()
             elif option == "exit":
                 break
             else:
                 print("Invalid option")
+
+    def scan_ports(self, ports):
+        port_list = [int(p) for p in ports.split(" ")]
+        print("PORTS: ", type(port_list))
+        self.ports_scanner.scan_ports(*port_list)
 
     def check_vulnerabilities(self):
         # self.wps_api.get_vulnerabilities_by_wp_version(self.wp_site.wp_version)
@@ -75,8 +87,10 @@ class Menu:
         file_content += "Logins: " + str(self.wp_site.logins) + "\n"
         file_content += "Users: " + str(self.wp_site.users) + "\n"
         file_content += "Files: " + str(self.wp_site.files) + "\n"
-        # file_content += "Admin: " + str(self.wp_site.admin) + "\n"
-        # file_content += "Is Readme: " + str(self.wp_site.is_readme) + "\n"
+        file_content += "Usernames: " + str(self.wp_site.usernames) + "\n"
+        file_content += "Admin: " + str(self.wp_site.admin) + "\n"
+        file_content += "Ips: " + str(self.wp_site.ips) + "\n"
+        file_content += "Ports: " + str(self.wp_site.ports) + "\n"
         # file_content += "Is Installed: " + str(self.wp_site.is_installed) + "\n"
         # file_content += "Is WP: " + str(self.wp_site.is_wp) + "\n"
         # file_content += "Is HTTPS: " + str(self.wp_site.http_ver) + "\n"
@@ -98,7 +112,10 @@ class Menu:
         print("Logins: ", self.wp_site.logins)
         print("Users: ", self.wp_site.users)
         print("Files: ", self.wp_site.files)
-        # print("Admin: ", self.wp_site.admin)
+        print("Usernames: ", self.wp_site.usernames)
+        print("Admin: ", self.wp_site.admin)
+        print("Ips: ", self.wp_site.ips)
+        print("Ports: ", self.wp_site.ports)
         # print("Is Readme: ", self.wp_site.is_readme)
         # print("Is Installed: ", self.wp_site.is_installed)
         # print("Is WP: ", self.wp_site.is_wp)

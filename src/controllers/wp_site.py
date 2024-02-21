@@ -17,6 +17,10 @@ class WpSite:
         "plugins",
         "__files",
         "__logins",
+        "__admin",
+        "__usernames",
+        "__ips",
+        "__ports",
     )
 
     def __init__(self, url: str, user_agent: str = "rand", https: bool = False) -> None:
@@ -24,14 +28,34 @@ class WpSite:
         self.__url: str = self.__check_url_integrity(url)
         self.__user_agent: str = self.__set_user_agent(user_agent)
         self.__wp_version: str = None
-        self.__users: list[dict] = []
+        self.__users: dict[str, str] = []
+        self.__usernames: set = set()
         self.themes: dict[str, str] = {}
         self.plugins: dict[str, str] = {}
         self.__files: set[str] = set()
         self.__logins: dict[str, str] = {}
+        self.__admin: dict[str, str] = {}
+        self.__ips = []
+        self.__ports: dict[str, list[dict[str, str]]] = {}
 
         self.__check_is_wp()
         self.__check_is_installed()
+
+    @property
+    def ips(self) -> list:
+        return self.__ips
+
+    @property
+    def ports(self) -> dict:
+        return self.__ports
+
+    @property
+    def admin(self) -> dict:
+        return self.__admin
+
+    @property
+    def usernames(self) -> set:
+        return self.__usernames
 
     @property
     def users(self) -> set:
@@ -39,7 +63,7 @@ class WpSite:
 
     @users.setter
     def users(self, user: dict):
-        self.__users.append(user)
+        self.__users.add(user)
 
     # @property
     # def themes(self) -> dict:
@@ -170,14 +194,15 @@ class WpSite:
             print("The Website is currently in install mode.")
 
     def detect_users(self) -> bool:
-        slug: tuple[str] = ("/?rest_route=/wp/v2/users", "/wp-json/wp/v2/users")
-
+        slug: tuple[str] = ("?rest_route=/wp/v2/users", "wp-json/wp/v2/users")
+        print("url: ", self.url + slug[0])
         res = requests.get(
             self.url + slug[0],
             headers={"User-Agent": self.user_agent},
             allow_redirects=False,
             verify=False,
         )
+        print("USERS: ", res)
         if res.status_code != 200:
             res = requests.get(
                 self.url + slug[1],
@@ -185,10 +210,10 @@ class WpSite:
                 allow_redirects=False,
                 verify=False,
             )
-
+        print("USERS: ", res.json())
         if res.status_code != 200:
             return False
-
+        print("USERS: ", res.json())
         users = res.json()
         if users == []:
             return False

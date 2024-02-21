@@ -9,10 +9,10 @@ class Bruteforce:
     def __init__(self, scanner) -> None:
         self.__url: str = scanner.url
         self.__user_agent: str = scanner.user_agent
-        self.__users = scanner.users
+        self.__usernames = scanner.usernames
         self.__passwords = self.set_passwords()
         self.__logins = scanner.logins
-        self.__admin = {}
+        self.__admin = scanner.admin
 
     def set_passwords(self, filepath="src/db/passwords.txt"):
         with open(filepath, "r") as file:
@@ -33,7 +33,7 @@ class Bruteforce:
 
     @property
     def users(self):
-        return self.__users
+        return self.__usernames
 
     @property
     def logins(self):
@@ -75,7 +75,7 @@ class Bruteforce:
                 error_msg
                 == f"Error: The password you entered for the username {username} is incorrect. Lost your password?"
             ):
-                self.__users.add(username)
+                self.__usernames.add(username)
             print(f"Login failed with message: {error_msg}")
             session.close()
             return False

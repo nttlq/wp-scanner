@@ -10,7 +10,7 @@ from utils.file_manager import FileManager
 from controllers.wp_site import WpSite
 from controllers.brute_force import Bruteforce
 from controllers.wps_api import WpsApi
-
+from controllers.ports_scanner import PortScanner
 from views.menu import Menu
 
 
@@ -29,8 +29,10 @@ def start_application():
     wp_site = WpSite(url, user_agent, args.https)
     brute_force = Bruteforce(wp_site)
     wps_api = WpsApi()
+    ports_scanner = PortScanner(wp_site)
     file_manager = FileManager(wp_site)
-    menu = Menu(wp_site, brute_force, wps_api, file_manager)
+
+    menu = Menu(wp_site, brute_force, wps_api, ports_scanner, file_manager)
 
     menu.parse_input()
 
