@@ -18,12 +18,13 @@ def is_valid_ports_input(ports):
 
 class Menu:
     def __init__(
-        self, wp_site, brute_force, wps_api, ports_scanner, file_manager
+        self, wp_site, brute_force, wps_api, ports_scanner, crawler, file_manager
     ) -> None:
         self.wp_site = wp_site
         self.brute_force = brute_force
         self.wps_api = wps_api
         self.ports_scanner = ports_scanner
+        self.crawler = crawler
         self.file_manager = file_manager
 
     @staticmethod
@@ -35,7 +36,8 @@ class Menu:
         string += "[2] Brutforce" "\n"
         string += "[3] Check vulnerabilities" "\n"
         string += "[4] Scan ports" "\n"
-        string += "[5] Show Report" "\n"
+        string += "[5] Find linked urls" "\n"
+        string += "[6] Show Report" "\n"
         string += "[exit]"
         return string
 
@@ -65,6 +67,9 @@ class Menu:
 
                 # self.scan_ports(ports)
             elif option == "5":
+                max_depth = int(input("Enter max depth: "))
+                self.crawler.crawl_website(max_depth)
+            elif option == "6":
                 self.show_report()
             elif option == "exit" or option == "0":
                 break
@@ -126,6 +131,7 @@ class Menu:
         file_content += "Admin: " + str(self.wp_site.admin) + "\n"
         file_content += "Ips: " + str(self.wp_site.ips) + "\n"
         file_content += "Ports: " + str(self.wp_site.ports) + "\n"
+        file_content += "Linked urls: " + str(self.wp_site.linked_urls) + "\n"
         # file_content += "Is Installed: " + str(self.wp_site.is_installed) + "\n"
         # file_content += "Is WP: " + str(self.wp_site.is_wp) + "\n"
         # file_content += "Is HTTPS: " + str(self.wp_site.http_ver) + "\n"
@@ -151,6 +157,7 @@ class Menu:
         print("Admin: ", self.wp_site.admin)
         print("Ips: ", self.wp_site.ips)
         print("Ports: ", self.wp_site.ports)
+        print("Linked urls: ", self.wp_site.linked_urls)
         # print("Is Readme: ", self.wp_site.is_readme)
         # print("Is Installed: ", self.wp_site.is_installed)
         # print("Is WP: ", self.wp_site.is_wp)

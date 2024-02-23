@@ -1,124 +1,79 @@
+from urllib.parse import urljoin
+import threading
+
 import requests
 from bs4 import BeautifulSoup
 
-# import networkx as nx
-# import matplotlib.pyplot as plt
-from urllib.parse import urlparse, urljoin
 
+class Crawler:
+    def __init__(self, wp_site):
+        self.__url: str = wp_site.url
+        self.visited_urls: set[str] = wp_site.linked_urls
+        self.max_depth: int = 2
+        self.to_visit: list[tuple[str, int]] = [(self.url, 0)]
+        self.lock = threading.Lock()
 
-# Функция для краулинга веб-сайта с обработкой ошибок
-def crawl_website(url, max_depth=3):
-    visited_urls = set()
-    to_visit = [(url, 0)]
+    @property
+    def url(self) -> str:
+        return self.__url
 
-    while to_visit:
-        current_url, depth = to_visit.pop()
-        if current_url in visited_urls or depth > max_depth:
-            continue
-
+    def __visit_url(self, current_url, depth) -> None:
+        if current_url in self.visited_urls or depth > self.max_depth:
+            return
         try:
-            # Проверка и добавление схемы, если ее нет
-            parsed_url = urlparse(current_url)
-            if not parsed_url.scheme:
-                current_url = "http://" + current_url  # Можно также использовать https
-
-            # Загрузка страницы
-            response = requests.get(current_url)
-            response.raise_for_status()  # Проверка на ошибки HTTP
-
-            # Парсинг HTML-кода страницы
-            soup = BeautifulSoup(response.text, "html.parser")
-
-            # Извлечение ссылок
+            res = requests.get(current_url, timeout=2.5, verify=False)
+            res.raise_for_status()
+            soup = BeautifulSoup(res.text, "html.parser")
             links = [
                 urljoin(current_url, link.get("href"))
                 for link in soup.find_all("a")
                 if link.get("href")
             ]
-
-            # Добавление найденных ссылок в очередь с учетом глубины
-            to_visit.extend([(link, depth + 1) for link in links])
-
-            visited_urls.add(current_url)
-            print(f"Найдена ссылка: {current_url}")
+            self.to_visit.extend([(link, depth + 1) for link in links])
+            self.visited_urls.add(current_url)
 
         except requests.exceptions.RequestException as e:
             print(f"Ошибка при обращении к {current_url}: {e}")
 
-    return visited_urls
+    def crawl_website(self, max_depth: int = None):
+        if max_depth:
+            if type(max_depth) != int:
+                raise TypeError("max_depth должен быть целым числом")
+
+            if max_depth < 0:
+                raise ValueError("max_depth должен быть неотрицательным числом")
+
+            self.max_depth = max_depth
+
+        threads = []
+        while self.to_visit or threads:
+            self.lock.acquire()
+            if not self.to_visit:
+                self.lock.release()
+                threads = [t for t in threads if t.is_alive()]
+                continue
+
+            current_url, depth = self.to_visit.pop()
+            self.lock.release()
+            t = threading.Thread(target=self.__visit_url, args=(current_url, depth))
+            t.start()
+            threads.append(t)
+
+        for t in threads:
+            t.join()
 
 
-# # Функция для построения ссылочного графа
-# def build_graph(visited_urls):
-#     G = nx.Graph()
-
-#     for url in visited_urls:
-#         G.add_node(url)
-
-#     # Добавление ребер на основе найденных ссылок
-#     for url in visited_urls:
-#         try:
-#             response = requests.get(url)
-#             response.raise_for_status()
-#             soup = BeautifulSoup(response.text, "html.parser")
-#             links = [
-#                 urljoin(url, link.get("href"))
-#                 for link in soup.find_all("a")
-#                 if link.get("href")
-#             ]
-#             G.add_edges_from([(url, link) for link in links])
-
-#         except requests.exceptions.RequestException as e:
-#             print(f"Ошибка при обращении к {url} для построения графа: {e}")
-
-#     return G
-
-
-# # Функция для проверки связности графа
-# def is_connected_graph(G):
-#     return nx.is_connected(G)
-
-
-# # Функция для расчета индекса цитирования (PageRank)
-# def calculate_page_rank(G):
-#     page_rank = nx.pagerank(G)
-#     return page_rank
-
-
-# # Функция для поиска страниц с наибольшим индексом цитирования
-# def find_top_pages(page_rank, n):
-#     top_pages = sorted(page_rank.items(), key=lambda x: x[1], reverse=True)[:n]
-#     return top_pages
-
-
-# def find_pages_with_lowest_page_rank(page_rank, n):
-#     # Используем lambda-функцию для сортировки по индексу цитирования
-#     sorted_pages = sorted(page_rank.items(), key=lambda x: x[1])
-
-#     # Получаем первые n страниц с наименьшим индексом цитирования
-#     lowest_rank_pages = sorted_pages[:n]
-
-#     return lowest_rank_pages
-
-
-# # Функция для поиска кратчайших путей
-# def find_shortest_paths(G, source, target):
-#     shortest_paths = nx.shortest_path(G, source=source, target=target)
-#     return shortest_paths
-
-import urllib3
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 if __name__ == "__main__":
+    import urllib3
 
-    start_url = "curse.local"  #  Начальный URL
-    max_depth = 6  # Максимальная глубина краулинга
-    top_n_pages = (
-        3  # Количество страниц с наибольшим индексом цитирования для отображения
-    )
-    low_n_pages = 3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    # Вызов функций
-    visited_urls = crawl_website(start_url, max_depth)
+    class Wp_Site:
+        def __init__(self):
+            self.url = "https://curse.local"
+            self.linked_urls = set()
 
-    print("visited: ", visited_urls)
+    wp = Wp_Site()
+    site = Crawler(wp)
+    site.crawl_website()
+    print(site.visited_urls)

@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 from bs4 import BeautifulSoup
+import keyboard
 
 
 class Bruteforce:
@@ -13,6 +14,11 @@ class Bruteforce:
         self.__passwords = self.set_passwords()
         self.__logins = scanner.logins
         self.__admin = scanner.admin
+        self.__stop = False  # Add a stop flag
+        keyboard.on_press_key("q", self.stop)  # Stop on 'q' key press
+
+    def stop(self, e=None):  # Add a method to set the stop flag
+        self.__stop = True
 
     def set_passwords(self, filepath="src/db/passwords.txt"):
         with open(filepath, "r") as file:
@@ -110,17 +116,22 @@ class Bruteforce:
             usernames = self.users
         if not passwords:
             passwords = self.passwords
-
+        self.__stop = False  # Reset the stop flag
+        print("Press 'q' to stop the bruteforce.")
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             with requests.Session() as session:
                 for username in usernames:
+                    if self.__stop:  # Check the stop flag
+                        print("Bruteforce stopped.")
+                        break
                     if executor._shutdown:
                         break
                     tasks = []
                     for password in passwords:
+                        if self.__stop:  # Check the stop flag
+                            break
                         task = executor.submit(
                             self.__sign_in, session, username, password
                         )
-                        # добавляем задачу в список только в том случае, если все предыдущие задачи для данного логина не были выполнены
                         if not any(task.result() for task in tasks):
                             tasks.append(task)

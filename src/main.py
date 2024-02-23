@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from utils.printings import Printer
 from utils.ags_parser import parser
 from utils.file_manager import FileManager
+from utils.crawler import Crawler
 
 from controllers.wp_site import WpSite
 from controllers.brute_force import Bruteforce
@@ -30,9 +31,10 @@ def start_application():
     brute_force = Bruteforce(wp_site)
     wps_api = WpsApi()
     ports_scanner = PortScanner(wp_site)
+    crawler = Crawler(wp_site)
     file_manager = FileManager(wp_site)
 
-    menu = Menu(wp_site, brute_force, wps_api, ports_scanner, file_manager)
+    menu = Menu(wp_site, brute_force, wps_api, ports_scanner, crawler, file_manager)
 
     menu.parse_input()
 

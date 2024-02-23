@@ -21,6 +21,7 @@ class WpSite:
         "__usernames",
         "__ips",
         "__ports",
+        "__linked_urls",
     )
 
     def __init__(self, url: str, user_agent: str = "rand", https: bool = False) -> None:
@@ -29,17 +30,23 @@ class WpSite:
         self.__user_agent: str = self.__set_user_agent(user_agent)
         self.__wp_version: str = None
         self.__users: dict[str, str] = []
-        self.__usernames: set = set()
+        self.__usernames: set[str] = set()
         self.themes: dict[str, str] = {}
         self.plugins: dict[str, str] = {}
         self.__files: set[str] = set()
         self.__logins: dict[str, str] = {}
         self.__admin: dict[str, str] = {}
-        self.__ips = []
+        self.__ips: list[str] = []
         self.__ports: dict[str, list[dict[str, str]]] = {}
+        self.__linked_urls: set[str] = set()
 
-        self.__check_is_wp()
-        self.__check_is_installed()
+        # self.__check_is_wp()
+
+        # self.__check_is_installed()
+
+    @property
+    def linked_urls(self) -> set[str]:
+        return self.__linked_urls
 
     @property
     def ips(self) -> list:
@@ -429,11 +436,8 @@ class WpSite:
             self.add_file("debug.log")
             print("Debug log file found: %s" % (self.url + "debug.log"))
 
-    def is_backup_file(self):
-        backup = [
-            "wp-config.php~",
-            "wp-config.php.save",
-            ".wp-config.php.bck",
+    def detect_backups(self):
+        backups = (
             "wp-config.php.bck",
             ".wp-config.php.swp",
             "wp-config.php.swp",
@@ -444,6 +448,9 @@ class WpSite:
             "wp-config.save",
             "wp-config.old",
             "wp-config.php.old",
+            "wp-config.php~",
+            "wp-config.php.save",
+            ".wp-config.php.bck",
             "wp-config.php.orig",
             "wp-config.orig",
             "wp-config.php.original",
@@ -471,11 +478,17 @@ class WpSite:
             "wp-config.php.1",
             "wp-config.php.2",
             "wp-config.php.3",
+            "wp-config.BACKUP",
+            "wp-config.php.BACKUP",
+            "wp-config.COPY",
+            "wp-config.php.COPY",
             "wp-config.php._inc",
             "wp-config_inc",
             "wp-config.php.SAVE",
             ".wp-config.php.BCK",
             "wp-config.php.BCK",
+            "wp-config.php._INC",
+            "wp-config_INC",
             ".wp-config.php.SWP",
             "wp-config.php.SWP",
             "wp-config.php.SWO",
@@ -491,10 +504,8 @@ class WpSite:
             "wp-config.ORIGINAL",
             "wp-config.TXT",
             "wp-config.php.TXT",
-            "wp-config.BACKUP",
-            "wp-config.php.BACKUP",
-            "wp-config.COPY",
-            "wp-config.php.COPY",
+            ".wp-config.php.SWP",
+            "wp-config.php.SWP",
             "wp-config.TMP",
             "wp-config.php.TMP",
             "wp-config.ZIP",
@@ -509,19 +520,16 @@ class WpSite:
             "wp-config.php.BACK",
             "wp-config.TEST",
             "wp-config.php.TEST",
-            "wp-config.php._INC",
-            "wp-config_INC",
-        ]
+        )
 
-        for b in backup:
-            r = requests.get(
-                self.url + b, headers={"User-Agent": self.__user_agent}, verify=False
+        for backup in backups:
+            res = requests.get(
+                self.url + backup,
+                headers={"User-Agent": self.__user_agent},
+                verify=False,
             )
-            if "200" in str(r) and not "404" in r.text:
-                self.add_file(b)
-                print(
-                    "A wp-config.php backup file has been found in: %s" % (self.url + b)
-                )
+            if res.status_code == 200:
+                self.add_file(backup)
 
 
 if __name__ == "__main__":
