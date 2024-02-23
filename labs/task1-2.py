@@ -1,8 +1,83 @@
 import random
 import math
 from itertools import combinations
+import time
+import os
+import csv
 
 from colorama import Fore, Back, Style
+
+
+class FileManager:
+    def __init__(self, folder_name):
+
+        self.__folder_path = self.set_folder(folder_name)
+        self.__create_folder()
+        # self.create_file("gcd.txt")
+
+    def set_folder(self, name: str):
+        folder_path = f"labs/public/{name}"
+        return folder_path
+
+    @property
+    def folder_path(self):
+        return self.__folder_path
+
+    def __create_folder(self):
+        # print(self.folder_path)
+        try:
+            os.mkdir(self.folder_path)
+        except TypeError:
+            raise NotADirectoryError("Invalid path")
+        except FileExistsError:
+            pass
+            # print("Folder already exists")
+
+        return True
+
+    def create_file(self, file_name):
+        file_path = f"{self.folder_path}/{file_name}"
+        with open(file_path, "w") as file:
+            file.write("")
+        return True
+
+    def save_file(self, file_name, file_content):
+        file_path = f"{self.folder_path}/{file_name}"
+        with open(file_path, "w") as file:
+            file.write(file_content)
+        return True
+
+    def save_to_csv(self, file_name, file_content):
+        file_path = f"{self.folder_path}/{file_name}"
+        with open(file_path, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(
+                ["Number a", "Number b", "Result", "Iterations", "Execution time"]
+            )
+            writer.writerow(
+                [
+                    file_content["a"],
+                    file_content["b"],
+                    file_content["Result"],
+                    file_content["Iterations"],
+                    file_content["Execution Time"],
+                ]
+            )
+
+
+def measure_time(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(
+            Fore.BLUE + f"Execution time of {func.__name__}: {execution_time} seconds",
+            Style.RESET_ALL,
+        )
+        return result, execution_time
+
+    return wrapper
 
 
 class Factorization:
@@ -132,6 +207,21 @@ class Factorization:
         else:
             return None
 
+    @staticmethod
+    def pollards_factorization(n: int):
+        x = 2
+        y = 2
+        d = 1
+        while d == 1:
+            x = (x**2 + 1) % n
+            y = (y**2 + 1) % n
+            y = (y**2 + 1) % n
+            d = math.gcd(abs(x - y), n)
+        if d == n:
+            return None
+        else:
+            return d, n // d
+
 
 def main():
     while True:
@@ -198,6 +288,7 @@ class Math:
             else:
                 return Math.gcd_recursion(y, (x % y))
 
+    @measure_time
     @staticmethod
     def gcd(a: int, b: int) -> int:
         count: int = 0
@@ -216,18 +307,47 @@ class Math:
 
 
 def start():
+    file_manager = FileManager("gcd")
     print(Math.factors(91))
     a = 2342353232423523452623609934293912324214
     b = 243432
-    answ, count = Math.gcd(a, b)
+    (answ, count), execution_time = Math.gcd(a, b)
+    result_csv = {
+        "a": a,
+        "b": b,
+        "Result": answ,
+        "Iterations": count,
+        "Execution Time": execution_time,
+    }
+    result = f"GCD:\nNumber a: {a}\nNumber b: {b}\nResult: {answ}\nIterations: {count}\nExecution time: {execution_time}"
+    file_manager.save_file(
+        "gcd.txt",
+        result,
+    )
+    file_manager.save_to_csv(
+        "gcd.csv",
+        result_csv,
+    )
     answ2 = math.gcd(a, b)
-    answ3 = Math.gcd_recursion(a, b)
+
+    # answ3 = Math.gcd_recursion(a, b)
     print(Back.MAGENTA + "a:", a, "b:", b, Style.RESET_ALL)
-    print(Back.WHITE + "gcd_rec:", answ3, Style.RESET_ALL)
+    # print(Back.WHITE + "gcd_rec:", answ3, Style.RESET_ALL)
     print(Back.BLUE + "gcd:", answ, Style.RESET_ALL)
     print(Fore.BLUE + "count:", count, Style.RESET_ALL)
     print(Back.GREEN + "math.gcd:", answ2, Style.RESET_ALL)
+    from egcd import egcd
+
+    n = 1403
+    a3, b3 = Factorization.pollards_factorization(n)
+    print(
+        Fore.LIGHTMAGENTA_EX + f"Pollards method\nn:{n}\na:{a3}\nb:{b3}",
+        Style.RESET_ALL,
+    )
+    # print(egcd.egcd(15, 26))
+    print(Fore.RED + "EGCD:", egcd(7, 11), Style.RESET_ALL)
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    start()

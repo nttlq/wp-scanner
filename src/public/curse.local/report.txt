@@ -1,0 +1,14 @@
+Report
+URL: http://curse.local/
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.16) Gecko/20120421 Gecko Firefox/11.0
+WP version: 6.4.3
+Themes: {}
+Plugins: {}
+Logins: {}
+Users: [{'id': 1, 'name': 'admin', 'slug': 'admin'}]
+Files: {'readme.html', 'robots.txt'}
+Usernames: set()
+Admin: {}
+Ips: []
+Ports: {'127.0.0.1': None}
+Requests to API remaining: 25

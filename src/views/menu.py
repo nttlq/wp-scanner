@@ -39,7 +39,7 @@ class Menu:
                 self.scan_ports(ports)
             elif option == "5":
                 self.show_report()
-            elif option == "exit":
+            elif option == "exit" or option == "0":
                 break
             else:
                 print("Invalid option")
