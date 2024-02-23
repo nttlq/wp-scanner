@@ -12,8 +12,9 @@ class PortScanner:
         self.__url: str = wp_site.url
         self.ips = wp_site.ips
         self.ports = wp_site.ports
-        self.ips = self.get_ips()
-        # self.ips.append(ips)
+        ips = self.get_ips()
+        for ip in ips:
+            self.ips.append(ip)
 
     @property
     def url(self):
@@ -92,14 +93,25 @@ class PortScanner:
                     # returns an error indicator
                     result = s.connect_ex((ip, port))
                     if result == 0:
-                        result_ports.append(port)
+                        service = socket.getservbyport(port)
+                        banner = self.banner_grabbing(ip, port)
+                        # if service is None:
+                        # print("Service: ", service)
+                        port_info = {"port": port, "service": service, "banner": banner}
+                        result_ports.append(port_info)
+
                         print("Port {} is open".format(port))
                         print("ports: ", result_ports)
                     s.close()
 
                 if result_ports == []:
                     result_ports = None
-                self.ports[ip] = result_ports
+                if ip not in self.ports:
+                    self.ports[ip] = []
+                # self.ports[ip] = result_ports
+                for result in result_ports:
+                    self.ports[ip].append(result)
+                # self.ports[ip] = result_ports
 
         except KeyboardInterrupt:
             print("\n Exiting Program !!!!")
@@ -145,7 +157,11 @@ class PortScanner:
 
             if result_ports == []:
                 result_ports = None
-            self.ports[ip] = result_ports
+            if ip not in self.ports:
+                self.ports[ip] = []
+            # self.ports[ip] = result_ports
+            for result in result_ports:
+                self.ports[ip].append(result)
 
         # except KeyboardInterrupt:
         #     print("\n Exiting Program !!!!")

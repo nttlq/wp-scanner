@@ -1,12 +1,13 @@
 import os
 from urllib.parse import urlparse, urlunparse
+import datetime
 
 
 class FileManager:
     def __init__(self, scanner):
         self.__folder_path = self.set_folder(scanner.url)
         self.__create_folder()
-        self.create_file("report.txt")
+        # self.create_file("report.txt")
 
     def set_folder(self, url: str):
         url = urlparse(url).netloc

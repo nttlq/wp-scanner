@@ -1,4 +1,19 @@
+import re
 from utils.printings import Printer
+
+
+def is_valid_ports_input(ports):
+    # Check if input is in the format "port-port"
+    if re.match(r"^\d{1,5}-\d{1,5}$", ports):
+        start_port, end_port = map(int, ports.split("-"))
+        return 1 < start_port < 65535 and 1 < end_port < 65535
+
+    # Check if input is in the format "port port ... port"
+    if re.match(r"^(\d{1,5} )*\d{1,5}$", ports):
+        return all(1 < int(port) < 65535 for port in ports.split())
+
+    # If input doesn't match any of the expected formats, it's invalid
+    return False
 
 
 class Menu:
@@ -36,7 +51,19 @@ class Menu:
                 self.check_vulnerabilities()
             elif option == "4":
                 ports = input("Choose an ports: ")
-                self.scan_ports(ports)
+
+                if is_valid_ports_input(ports):
+                    if "-" in ports:
+                        start_port, end_port = map(int, ports.split("-"))
+                        self.scan_ports_in_range(start_port, end_port)
+                    else:
+                        self.scan_ports(*map(int, ports.split()))
+                else:
+                    print(
+                        "Invalid input. Please enter ports in the format 'port-port' or 'port port ... port'."
+                    )
+
+                # self.scan_ports(ports)
             elif option == "5":
                 self.show_report()
             elif option == "exit" or option == "0":
@@ -44,7 +71,15 @@ class Menu:
             else:
                 print("Invalid option")
 
-    def scan_ports(self, ports):
+    def scan_ports_in_range(self, start_port, end_port):
+        self.ports_scanner.scan_ports_in_range(start_port, end_port)
+
+    def scan_ports(self, *ports):
+        port_list = list(ports)
+        print("PORTS: ", type(port_list))
+        self.ports_scanner.scan_ports(*port_list)
+
+    def scan_ports2(self, ports):
         port_list = [int(p) for p in ports.split(" ")]
         print("PORTS: ", type(port_list))
         self.ports_scanner.scan_ports(*port_list)
@@ -94,11 +129,11 @@ class Menu:
         # file_content += "Is Installed: " + str(self.wp_site.is_installed) + "\n"
         # file_content += "Is WP: " + str(self.wp_site.is_wp) + "\n"
         # file_content += "Is HTTPS: " + str(self.wp_site.http_ver) + "\n"
-        file_content += (
-            "Requests to API remaining: "
-            + str(self.wps_api.requests_to_api_remaining)
-            + "\n"
-        )
+        # file_content += (
+        #     "Requests to API remaining: "
+        #     + str(self.wps_api.requests_to_api_remaining)
+        #     + "\n"
+        # )
         # file_content += "Is Robots: " + str(self.wp_site.is_robots) + "\n"
         self.file_manager.save_file("report.txt", file_content)
 
@@ -120,7 +155,7 @@ class Menu:
         # print("Is Installed: ", self.wp_site.is_installed)
         # print("Is WP: ", self.wp_site.is_wp)
         print("Is HTTPS: ", self.wp_site.http_ver)
-        print("Requests to API remaining: ", self.wps_api.requests_to_api_remaining)
+        # print("Requests to API remaining: ", self.wps_api.requests_to_api_remaining)
         self.save_report()
         # print("Is Robots: ", self.wp_site.is_robots)
         # print("Is Sitemap: ", self.wp_site.is_sitemap)

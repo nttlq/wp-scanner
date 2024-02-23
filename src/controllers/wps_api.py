@@ -5,24 +5,27 @@ import requests
 
 
 class WpsApi:
-    __slots__ = ("__token", "__url", "__header", "__requests_to_api_remaining")
+    __slots__ = (
+        "__url",
+        "__header",
+        "__tokens",
+        "__token",
+    )
 
-    def __init__(self, token=None):
-        self.__token: str = self.__set_token(token)
+    def __init__(self):
         self.__url: str = "https://wpscan.com/api/v3/"
-        self.__header = self.__set_header()
-        self.__requests_to_api_remaining = self.__get_requests_to_api_remaining()
+        self.__header: dict[str, str] = {}
+        self.__tokens: list[str] = self.__read_tokens()
+        self.__token: str = self.__set_token()
 
-        self.__check_requests_to_api_remaining()
+        # self.__header = self.__set_header()
+        # self.__requests_to_api_remaining = self.__get_requests_to_api_remaining()
+
+        # self.__check_requests_to_api_remaining()
 
     @property
     def header(self) -> dict[str, str]:
         return self.__header
-
-    def __set_header(self) -> dict[str, str]:
-        header = {"Authorization": f"Token token={self.token}"}
-
-        return header
 
     @property
     def url(self) -> str:
@@ -32,24 +35,40 @@ class WpsApi:
     def token(self) -> str:
         return self.__token
 
-    def __set_token(self, token: str) -> str:
-        if token is not None:
+    def __read_tokens(self) -> list[str]:
+        tokens = []
+        with open("src/db/tokens_api.txt", "r") as file:
+            tokens = file.read().split()
+        print("Tokens: ", *tokens)
+        return tokens
+
+    def __set_header(self, token: str) -> dict[str, str]:
+        header = {"Authorization": f"Token token={token}"}
+
+        return header
+
+    def __set_token(self) -> str:
+        if not self.__tokens:
+            raise MissingTokenError("NO TOKENS AVAILABLE")
+
+        for token in self.__tokens:
             if len(token) != 43:
                 raise ValueError("INVALID TOKEN")
-            return token
-        token: str = os.environ.get("WPS_API_TOKEN")
-        if not token:
-            raise MissingTokenError("TOKEN NOT FOUND")
 
-        return token
+            self.__header = self.__set_header(token)
+            print("Token: ", token)
+            if self.__check_requests_to_api_remaining():
+                return token
 
-    @property
-    def requests_to_api_remaining(self) -> int:
-        return self.__requests_to_api_remaining
+        raise RateLimitExceededError("NO REQUESTS REMAINING")
+
+    # @property
+    # def requests_to_api_remaining(self) -> int:
+    #     return self.__requests_to_api_remaining
 
     def __check_requests_to_api_remaining(self) -> bool:
-        if self.requests_to_api_remaining <= 0:
-            raise RateLimitExceededError("NO REQUESTS REMAINING")
+        if self.__get_requests_to_api_remaining() <= 0:
+            return False
         return True
 
     def __get_requests_to_api_remaining(self) -> int:
@@ -62,6 +81,7 @@ class WpsApi:
         result: str = res.text
         result: dict = json.loads(result)
         result: int = result.get("requests_remaining")
+        print("Requests remaining: ", result)
 
         return result
 

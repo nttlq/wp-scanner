@@ -1,10 +1,13 @@
 Report
-URL: http://torquemag.io/
-User-Agent: Mozilla/5.0 (iPad; CPU OS 7_0_4 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B554a Safari/9537.53
+URL: https://torquemag.io/
+User-Agent: Mozilla/5.0 (iPad; CPU OS 7_1_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D201 Safari/9537.53
 WP version: None
-Themes: {'wpengine-magazine': None}
-Plugins: {'genesis-blocks': [], 'wpengine-privacy-consent': None, 'wpengine-blocks': None, 'wpengine-tag-manager': None}
+Themes: {}
+Plugins: {}
 Logins: {}
 Users: []
-Files: {'robots.txt'}
-Requests to API remaining: 25
+Files: set()
+Usernames: set()
+Admin: {}
+Ips: ['172.64.146.209', '104.18.41.47']
+Ports: {'172.64.146.209': [{'port': 443, 'service': 'https', 'banner': 'HTTP/1.1 400 Bad Request\r'}, {'port': 80, 'service': 'http', 'banner': 'HTTP/1.1 403 Forbidden\r'}], '104.18.41.47': [{'port': 443, 'service': 'https', 'banner': 'HTTP/1.1 400 Bad Request\r'}, {'port': 80, 'service': 'http', 'banner': 'HTTP/1.1 403 Forbidden\r'}]}
