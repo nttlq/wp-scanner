@@ -1,30 +1,31 @@
+import os
+import sys
 import re
+
+from colorama import Fore, Style
+
 from utils.printings import Printer
-
-
-def is_valid_ports_input(ports):
-    # Check if input is in the format "port-port"
-    if re.match(r"^\d{1,5}-\d{1,5}$", ports):
-        start_port, end_port = map(int, ports.split("-"))
-        return 1 < start_port < 65535 and 1 < end_port < 65535
-
-    # Check if input is in the format "port port ... port"
-    if re.match(r"^(\d{1,5} )*\d{1,5}$", ports):
-        return all(1 < int(port) < 65535 for port in ports.split())
-
-    # If input doesn't match any of the expected formats, it's invalid
-    return False
 
 
 class Menu:
     def __init__(
-        self, wp_site, brute_force, wps_api, ports_scanner, crawler, file_manager
+        self,
+        wp_site,
+        brute_force,
+        wps_api,
+        ports_scanner,
+        crawler,
+        fuzzing,
+        sqliscanner,
+        file_manager,
     ) -> None:
         self.wp_site = wp_site
         self.brute_force = brute_force
         self.wps_api = wps_api
         self.ports_scanner = ports_scanner
         self.crawler = crawler
+        self.fuzzing = fuzzing
+        self.sqliscanner = sqliscanner
         self.file_manager = file_manager
 
     @staticmethod
@@ -36,10 +37,33 @@ class Menu:
         string += "[2] Brutforce" "\n"
         string += "[3] Check vulnerabilities" "\n"
         string += "[4] Scan ports" "\n"
-        string += "[5] Find linked urls" "\n"
-        string += "[6] Show Report" "\n"
-        string += "[exit]"
+        string += "[5] Crawler" "\n"
+        string += "[6] Fuzzing" "\n"
+        string += "[7] Show Report" "\n"
+        string += "[0] Exit"
         return string
+
+    @staticmethod
+    def clear() -> None:
+        if "linux" in sys.platform:
+            os.system("clear")
+        elif "darwin" in sys.platform:
+            os.system("clear")
+        else:
+            os.system("cls")
+
+    def check_is_wp(self):
+        option = input("Do you want to check if the site is a WordPress site? [1][0]: ")
+        if option == "y" or option == "1" or option == "":
+            self.wp_site.check_is_wp()
+            self.wp_site.check_is_installed()
+        elif option == "n" or option == "0":
+            print(
+                Fore.RED
+                + "Warning! Most functions may not work correctly."
+                + Style.RESET_ALL
+            )
+            pass
 
     def parse_input(self):
         while True:
@@ -52,73 +76,166 @@ class Menu:
             elif option == "3":
                 self.check_vulnerabilities()
             elif option == "4":
-                ports = input("Choose an ports: ")
-
-                if is_valid_ports_input(ports):
-                    if "-" in ports:
-                        start_port, end_port = map(int, ports.split("-"))
-                        self.scan_ports_in_range(start_port, end_port)
-                    else:
-                        self.scan_ports(*map(int, ports.split()))
-                else:
-                    print(
-                        "Invalid input. Please enter ports in the format 'port-port' or 'port port ... port'."
-                    )
-
-                # self.scan_ports(ports)
+                self.check_ports()
             elif option == "5":
-                max_depth = int(input("Enter max depth: "))
-                self.crawler.crawl_website(max_depth)
+                self.crawl_website()
             elif option == "6":
+                self.fuzzing_site()
+            elif option == "7":
                 self.show_report()
             elif option == "exit" or option == "0":
                 break
+            elif option == "clear":
+                Menu.clear()
             else:
                 print("Invalid option")
 
+    def is_valid_ports_input(self, ports):
+        # Check if input is in the format "port-port"
+        if re.match(r"^\d{1,5}-\d{1,5}$", ports):
+            start_port, end_port = map(int, ports.split("-"))
+            return 1 < start_port < 65535 and 1 < end_port < 65535
+
+        # Check if input is in the format "port port ... port"
+        if re.match(r"^(\d{1,5} )*\d{1,5}$", ports):
+            return all(1 < int(port) < 65535 for port in ports.split())
+
+        return False
+
+    def check_ports(self):
+        answ = input("Get IPs or scan ports? [0][1]: ")
+        if answ == "0":
+            self.ports_scanner.get_ips()
+        else:
+            if not self.wp_site.ips:
+                print("Scan IPs first!")
+                return
+            ports = input("Choose an ports: ")
+            if self.is_valid_ports_input(ports):
+                if "-" in ports:
+                    start_port, end_port = map(int, ports.split("-"))
+                    self.scan_ports_in_range(start_port, end_port)
+                else:
+                    self.scan_ports(*map(int, ports.split()))
+            else:
+                print(
+                    "Invalid input. Please enter ports in the format 'port-port' or 'port port ... port'."
+                )
+
+    def fuzzing_site(self):
+        answ = input("Fuzzing for themes or plugins or components? [0][1][2]: ")
+        if answ == "0":
+            self.fuzzing.fuzzing_themes()
+        elif answ == "1":
+            self.fuzzing.fuzzing_plugins()
+        elif answ == "2":
+            self.fuzzing.fuzzing_components()
+        else:
+            print("Invalid option")
+
     def scan_ports_in_range(self, start_port, end_port):
         self.ports_scanner.scan_ports_in_range(start_port, end_port)
+
+    def crawl_website(self):
+        answ = input("Scan site for linked urls or injection urls? [1][0]: ")
+        if answ == "1":
+            max_depth = int(input("Enter max depth: "))
+            self.crawler.crawl_website(max_depth)
+        else:
+            answ = input("Main url only? [1][0]: ")
+            if answ == "1":
+                self.crawler.find_injection_urls(True)
+            else:
+
+                self.crawler.find_injection_urls()
 
     def scan_ports(self, *ports):
         port_list = list(ports)
         print("PORTS: ", type(port_list))
         self.ports_scanner.scan_ports(*port_list)
 
-    def scan_ports2(self, ports):
-        port_list = [int(p) for p in ports.split(" ")]
-        print("PORTS: ", type(port_list))
-        self.ports_scanner.scan_ports(*port_list)
+    def check_sqli_vulnerabilities(self):
+        if self.wp_site.injection_urls:
+            answ = input("Use custom payloads or default? [1][0]: ")
+            if answ == "1":
+                answ = input("Enter the path to the file with payloads: ")
+                self.sqliscanner.detect_sqli_vulnerability(answ)
+            else:
+                self.sqliscanner.detect_sqli_vulnerability()
+        else:
+            print("Scan site for sqli urls first!")
 
     def check_vulnerabilities(self):
-        # self.wps_api.get_vulnerabilities_by_wp_version(self.wp_site.wp_version)
-        plugins = self.wp_site.plugins.keys()
-        for plugin in plugins:
-            vulnerabilities = self.wps_api.get_vulnerabilities_by_plugin(plugin)
-            self.wp_site.plugins[plugin] = vulnerabilities
-        themes = self.wp_site.themes.keys()
-        for theme in themes:
-            vulnerabilities = self.wps_api.get_vulnerabilities_by_theme(theme)
-
-            self.wp_site.themes[theme] = vulnerabilities
+        answ = input("Check vulnerabilities for wp or sql injections? [0][1]: ")
+        if answ == "0":
+            answ = input(
+                "Check vulnerabilities for wp version, plugins or themes? [0][1][2]\nCheck requests to api remaining[3]: "
+            )
+            if answ == "0":
+                wp_version = self.wp_site.wp_version.keys()
+                for version in wp_version:
+                    vulnerabilities = self.wps_api.get_vulnerabilities_by_wp_version(
+                        version
+                    )
+                    self.wp_site.wp_version[version] = vulnerabilities
+            elif answ == "1":
+                plugins = self.wp_site.plugins.keys()
+                for plugin in plugins:
+                    vulnerabilities = self.wps_api.get_vulnerabilities_by_plugin(plugin)
+                    self.wp_site.plugins[plugin] = vulnerabilities
+            elif answ == "2":
+                themes = self.wp_site.themes.keys()
+                for theme in themes:
+                    vulnerabilities = self.wps_api.get_vulnerabilities_by_theme(theme)
+                    self.wp_site.themes[theme] = vulnerabilities
+            elif answ == "3":
+                res = self.wps_api.get_requests_to_api_remaining()
+                print("Requests remaining: ", res)
+        elif answ == "1":
+            self.check_sqli_vulnerabilities()
 
     def scan_all(self):
         self.wp_site.detect_wp_version()
         self.wp_site.detect_users()
+        self.wp_site.detect_usernames()
         self.wp_site.detect_themes()
         self.wp_site.detect_plugins()
         self.wp_site.detect_robots_file()
         self.wp_site.detect_readme_file()
 
     def brute_forcing(self):
-        logins = open("src/db/logins.txt", "r").read().split()
-        passwords = open("src/db/passwords.txt", "r").read().split()
-        # logins = ("user2",)
-        # passwords = ("12345",)
+        db = input(
+            "Enter the custom database for logins and passwords or Default [1][0]: "
+        )
+        if db == "0":
+            answ = input("Usernames finded from site or predefined? [1][0]: ")
+            if answ == "1":
+                if self.wp_site.usernames:
+                    logins = self.wp_site.usernames
+                    print("Logins: ", logins)
+                else:
+                    print("Scan users in first!")
+                    return
+            else:
+                logins = open("src/db/logins.txt", "r").read().split()
+
+            passwords = open("src/db/passwords.txt", "r").read().split()
+
+        elif db == "1":
+            path_logins = input("Enter the path to the file with logins: ")
+            path_passwords = input("Enter the path to the file with passwords: ")
+            try:
+                logins = open(path_logins, "r").read().split()
+                passwords = open(path_passwords, "r").read().split()
+            except FileNotFoundError as e:
+                print("File not found: ", e)
+                return
+
         self.brute_force.bruteforce(logins, passwords)
 
     def save_report(self):
         file_content = ""
-        file_content += "Report" + "\n"
+        file_content += "[Report]" + "\n"
         file_content += "URL: " + str(self.wp_site.url) + "\n"
         file_content += "User-Agent: " + str(self.wp_site.user_agent) + "\n"
         file_content += "WP version: " + str(self.wp_site.wp_version) + "\n"
@@ -131,42 +248,129 @@ class Menu:
         file_content += "Admin: " + str(self.wp_site.admin) + "\n"
         file_content += "Ips: " + str(self.wp_site.ips) + "\n"
         file_content += "Ports: " + str(self.wp_site.ports) + "\n"
+        file_content += "All Forms: " + str(self.wp_site.all_forms) + "\n"
         file_content += "Linked urls: " + str(self.wp_site.linked_urls) + "\n"
-        # file_content += "Is Installed: " + str(self.wp_site.is_installed) + "\n"
-        # file_content += "Is WP: " + str(self.wp_site.is_wp) + "\n"
-        # file_content += "Is HTTPS: " + str(self.wp_site.http_ver) + "\n"
-        # file_content += (
-        #     "Requests to API remaining: "
-        #     + str(self.wps_api.requests_to_api_remaining)
-        #     + "\n"
-        # )
-        # file_content += "Is Robots: " + str(self.wp_site.is_robots) + "\n"
+        file_content += "Injection urls: " + str(self.wp_site.injection_urls) + "\n"
+        file_content += (
+            "Sqli vulnerable urls: " + str(self.wp_site.sqli_vulnerable_urls) + "\n"
+        )
         self.file_manager.save_file("report.txt", file_content)
 
     def show_report(self):
-        print("Report")
+        print("[Report]")
         print("URL: ", self.wp_site.url)
         print("User-Agent: ", self.wp_site.user_agent)
-        print("WP version: ", self.wp_site.wp_version)
-        print("Themes: ", self.wp_site.themes)
-        print("Plugins: ", self.wp_site.plugins)
-        print("Logins: ", self.wp_site.logins)
-        print("Users: ", self.wp_site.users)
-        print("Files: ", self.wp_site.files)
-        print("Usernames: ", self.wp_site.usernames)
-        print("Admin: ", self.wp_site.admin)
-        print("Ips: ", self.wp_site.ips)
-        print("Ports: ", self.wp_site.ports)
-        print("Linked urls: ", self.wp_site.linked_urls)
-        # print("Is Readme: ", self.wp_site.is_readme)
-        # print("Is Installed: ", self.wp_site.is_installed)
-        # print("Is WP: ", self.wp_site.is_wp)
-        print("Is HTTPS: ", self.wp_site.http_ver)
-        # print("Requests to API remaining: ", self.wps_api.requests_to_api_remaining)
+        print(
+            "WP version: ",
+            (
+                self.wp_site.wp_version
+                if self.wp_site.wp_version
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Themes: ",
+            (
+                self.wp_site.themes
+                if self.wp_site.themes
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Plugins: ",
+            (
+                self.wp_site.plugins
+                if self.wp_site.plugins
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Logins: ",
+            (
+                self.wp_site.logins
+                if self.wp_site.logins
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Users: ",
+            (
+                self.wp_site.users
+                if self.wp_site.users
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Files: ",
+            (
+                self.wp_site.files
+                if self.wp_site.files
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Usernames: ",
+            (
+                self.wp_site.usernames
+                if self.wp_site.usernames
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Admin: ",
+            (
+                self.wp_site.admin
+                if self.wp_site.admin
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Ips: ",
+            (
+                self.wp_site.ips
+                if self.wp_site.ips
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Ports: ",
+            (
+                self.wp_site.ports
+                if self.wp_site.ports
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "All Forms: ",
+            (
+                self.wp_site.all_forms
+                if self.wp_site.all_forms
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Linked urls: ",
+            (
+                self.wp_site.linked_urls
+                if self.wp_site.linked_urls
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Injection urls: ",
+            (
+                self.wp_site.injection_urls
+                if self.wp_site.injection_urls
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+        print(
+            "Sqli vulnerable urls: ",
+            (
+                self.wp_site.sqli_vulnerable_urls
+                if self.wp_site.sqli_vulnerable_urls
+                else Fore.RED + "Not found" + Style.RESET_ALL
+            ),
+        )
+
         self.save_report()
-        # print("Is Robots: ", self.wp_site.is_robots)
-        # print("Is Sitemap: ", self.wp_site.is_sitemap)
-        # print("Is Favicon: ", self.wp_site.is_favicon)
-        # print("Is Login: ", self.wp_site.is_login)
-        # print("Is Admin: ", self.wp_site.is_admin)
-        # print("Is XMLRPC: ", self.wp_site.is_xmlrpc)

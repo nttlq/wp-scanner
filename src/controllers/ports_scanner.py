@@ -2,9 +2,10 @@ import sys
 import socket
 from datetime import datetime
 from ipaddress import ip_address
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse
 
 import pyfiglet
+import keyboard
 
 
 class PortScanner:
@@ -12,9 +13,10 @@ class PortScanner:
         self.__url: str = wp_site.url
         self.ips = wp_site.ips
         self.ports = wp_site.ports
-        ips = self.get_ips()
-        for ip in ips:
-            self.ips.append(ip)
+        self.__stop = False
+
+    def stop(self, e=None):
+        self.__stop = True
 
     @property
     def url(self):
@@ -25,13 +27,13 @@ class PortScanner:
         return True if (ip_address(IP).is_private) else False
 
     def get_ips(self) -> list:
-        print("URL: ", self.url)
         try:
             ips = socket.gethostbyname_ex(self.url)
         except socket.gaierror:
             ips = []
-        print("IPs: ", ips)
-        return ips[2]
+
+        for ip in ips[2]:
+            self.ips.add(ip)
 
     def banner_grabbing(self, ip, port):
         try:
@@ -68,6 +70,8 @@ class PortScanner:
             return ""
 
     def scan_ports_in_range(self, port_begin: int, port_end: int):
+        keyboard.on_press_key("q", self.stop)
+
         if port_begin > port_end:
             temp = port_begin
             port_begin = port_end
@@ -77,41 +81,34 @@ class PortScanner:
             raise ValueError("Port range must be between 1 and 65,535")
 
         try:
-            # will scan ports between 1 to 65,535
             for ip in self.ips:
-                result_ports = (
-                    []
-                )  # Define the variable "result_ports" before the for loop
+                result_ports = []
 
-                for port in range(
-                    port_begin, port_end + 1
-                ):  # Iterate over the range of ports
-
+                for port in range(port_begin, port_end + 1):
+                    if self.__stop:
+                        print("Port scanning stopped.")
+                        self.__stop = False
+                        break
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     socket.setdefaulttimeout(1)
 
-                    # returns an error indicator
                     result = s.connect_ex((ip, port))
                     if result == 0:
                         service = socket.getservbyport(port)
                         banner = self.banner_grabbing(ip, port)
-                        # if service is None:
-                        # print("Service: ", service)
                         port_info = {"port": port, "service": service, "banner": banner}
                         result_ports.append(port_info)
 
                         print("Port {} is open".format(port))
-                        print("ports: ", result_ports)
+                        print(f"ports in {ip}: ", result_ports)
                     s.close()
 
                 if result_ports == []:
                     result_ports = None
                 if ip not in self.ports:
                     self.ports[ip] = []
-                # self.ports[ip] = result_ports
                 for result in result_ports:
                     self.ports[ip].append(result)
-                # self.ports[ip] = result_ports
 
         except KeyboardInterrupt:
             print("\n Exiting Program !!!!")
@@ -129,8 +126,6 @@ class PortScanner:
         elif type(ports) == tuple or type(ports) == list:
             ports = list(ports)
 
-        # try:
-        # will scan ports between 1 to 65,535
         for ip in self.ips:
             result_ports = []
             for port in ports:
@@ -138,13 +133,10 @@ class PortScanner:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     socket.setdefaulttimeout(1)
 
-                    # returns an error indicator
                     result = s.connect_ex((ip, port))
                     if result == 0:
                         service = socket.getservbyport(port)
                         banner = self.banner_grabbing(ip, port)
-                        # if service is None:
-                        # print("Service: ", service)
                         port_info = {"port": port, "service": service, "banner": banner}
                         result_ports.append(port_info)
 
@@ -153,81 +145,35 @@ class PortScanner:
                     s.close()
                 except socket.error:
                     print("\n Hostname Could Not Be Resolved !!!!")
-                    # sys.exit()
 
             if result_ports == []:
                 result_ports = None
             if ip not in self.ports:
                 self.ports[ip] = []
-            # self.ports[ip] = result_ports
             for result in result_ports:
                 self.ports[ip].append(result)
 
-        # except KeyboardInterrupt:
-        #     print("\n Exiting Program !!!!")
-        #     sys.exit()
-        # except socket.gaierror as e:
-        #     print("\n Hostname Could Not Be Resolved !!!!")
-        #     sys.exit()
-        # except socket.error as e:
-        #     print("\n Server not responding !!!!")
-        #     print(e)
-        # sys.exit()
-
-
-class WP:
-    def __init__(self) -> None:
-        self.url = "https://curse.local/"  # "curse.local"
-        self.ports = {}
-
 
 if __name__ == "__main__":
+
+    class WP:
+        def __init__(self) -> None:
+            self.url = "https://curse.local/"
+            self.ports = {}
+
     wp_site = WP()
     ports = "80 35 22"
-    # port = ports.split(" ")
     port = [int(p) for p in ports.split(" ")]
     print("Port: ", port)
     site = ("dfiles.ru", "torquemag.io")
-
     ps = PortScanner(wp_site)
     ips = ps.get_ips()
     print(ps.ips)
     for ip in ps.ips:
         print(repr(ip))
         print(ps.is_private_ip(ip))
-    # ('www.l.google.com', [], ['74.125.77.104', '74.125.77.147', '74.125.77.99'])
-
-    # service = socket.getservbyport(466)
-    # print("Service2: ", service)
-
     k = [21, 22, 25, 788, 80, 110, 443, 8080]
     k2 = list(k)
     print(k2)
     ps.scan_ports(22, 80, 443, 8080)
-    # ps.scan_ports_in_range(1, 100)
     print("ok:", ps.ports)
-
-
-def another_func():
-    h_name = socket.gethostname()
-    IP_addres = socket.gethostbyname(h_name)
-    print("Host Name is:" + h_name)
-    print("Computer IP Address is:" + IP_addres)
-    print("Public IP Address is:", ps.is_private_ip(IP_addres))
-
-    ascii_banner = pyfiglet.figlet_format("PORT SCANNER")
-    print(ascii_banner)
-
-    # Defining a target
-    if len(sys.argv) == 2:
-
-        # translate hostname to IPv4
-        target = socket.gethostbyname(sys.argv[1])
-    else:
-        print("Invalid amount of Argument")
-
-    # Add Banner
-    print("-" * 50)
-    print("Scanning Target: " + target)
-    print("Scanning started at:" + str(datetime.now()))
-    print("-" * 50)

@@ -1,7 +1,7 @@
-Report
+[Report]
 URL: https://curse.local/
-User-Agent: Opera/9.80 (Windows NT 6.1; U; es-ES) Presto/2.9.181 Version/12.00
-WP version: None
+User-Agent: Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en) AppleWebKit/418.8 (KHTML, like Gecko) Safari/419.3
+WP version: {}
 Themes: {}
 Plugins: {}
 Logins: {}
@@ -9,6 +9,9 @@ Users: []
 Files: set()
 Usernames: set()
 Admin: {}
-Ips: ['127.0.0.1']
+Ips: {'127.0.0.1'}
 Ports: {}
-Linked urls: {'https://curse.local/2024/02/02/test-post1/#respond', 'https://curse.local/', 'https://wordpress.org/', 'https://curse.local/2024/02/02/test-post1/#comment-2', 'https://en.gravatar.com/', 'https://curse.local/2024/02/02/test-post1/', 'https://curse.local/store/', 'https://curse.local/#content', 'https://curse.local/2024/02/02/hello-world/#comment-1', 'https://curse.local/2024/02/02/hello-world/#respond', 'https://curse.local', 'https://curse.local/2024/02/02/hello-world/#content', 'https://curse.local/2024/02/02/test-post1/#content', 'https://curse.local/2024/02/02/hello-world/', 'https://curse.local/store/#content'}
+All Forms: []
+Linked urls: set()
+Injection urls: set()
+Sqli vulnerable urls: set()

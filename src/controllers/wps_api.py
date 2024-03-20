@@ -18,11 +18,6 @@ class WpsApi:
         self.__tokens: list[str] = self.__read_tokens()
         self.__token: str = self.__set_token()
 
-        # self.__header = self.__set_header()
-        # self.__requests_to_api_remaining = self.__get_requests_to_api_remaining()
-
-        # self.__check_requests_to_api_remaining()
-
     @property
     def header(self) -> dict[str, str]:
         return self.__header
@@ -39,7 +34,6 @@ class WpsApi:
         tokens = []
         with open("src/db/tokens_api.txt", "r") as file:
             tokens = file.read().split()
-        print("Tokens: ", *tokens)
         return tokens
 
     def __set_header(self, token: str) -> dict[str, str]:
@@ -56,22 +50,17 @@ class WpsApi:
                 raise ValueError("INVALID TOKEN")
 
             self.__header = self.__set_header(token)
-            print("Token: ", token)
             if self.__check_requests_to_api_remaining():
                 return token
 
         raise RateLimitExceededError("NO REQUESTS REMAINING")
 
-    # @property
-    # def requests_to_api_remaining(self) -> int:
-    #     return self.__requests_to_api_remaining
-
     def __check_requests_to_api_remaining(self) -> bool:
-        if self.__get_requests_to_api_remaining() <= 0:
+        if self.get_requests_to_api_remaining() <= 0:
             return False
         return True
 
-    def __get_requests_to_api_remaining(self) -> int:
+    def get_requests_to_api_remaining(self) -> int:
         slug: str = "status"
         get_status_url: str = self.url + slug
         res = requests.get(get_status_url, headers=self.header)
@@ -81,7 +70,6 @@ class WpsApi:
         result: str = res.text
         result: dict = json.loads(result)
         result: int = result.get("requests_remaining")
-        print("Requests remaining: ", result)
 
         return result
 
@@ -120,7 +108,6 @@ class WpsApi:
 
         if result.get("status") == "plugin not found":
             return None
-            # raise ValueError("PLUGIN NOT FOUND")
 
         for _, info in result.items():
             vulnerabilities = info.get("vulnerabilities", [])
@@ -139,7 +126,6 @@ class WpsApi:
 
         if result.get("status") == "theme not found":
             return None
-            # raise ValueError("THEME NOT FOUND")
 
         for _, info in result.items():
             vulnerabilities = info.get("vulnerabilities", [])
@@ -177,16 +163,10 @@ class AuthenticationError(Exception):
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    from pathlib import Path
 
-    dotenv_path = Path("src/.env")
-    load_dotenv(dotenv_path=dotenv_path)
     wps = WpsApi()
     print(wps.token)
     print(wps.requests_to_api_remaining)
-    # sv = Saver("curse.local")
-    # print(sv.folder_path)
     theme = "wpengine-magazine"
     plugin = "wpengine-tag-manager"
     print(wps.get_vulnerabilities_by_plugin(plugin))

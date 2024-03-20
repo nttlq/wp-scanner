@@ -4,6 +4,7 @@ import re
 from typing import Generator
 
 import requests
+from bs4 import BeautifulSoup
 
 
 class WpSite:
@@ -22,13 +23,16 @@ class WpSite:
         "__ips",
         "__ports",
         "__linked_urls",
+        "all_forms",
+        "injection_urls",
+        "sqli_vulnerable_urls",
     )
 
     def __init__(self, url: str, user_agent: str = "rand", https: bool = False) -> None:
         self.__http_ver: bool = https
         self.__url: str = self.__check_url_integrity(url)
         self.__user_agent: str = self.__set_user_agent(user_agent)
-        self.__wp_version: str = None
+        self.__wp_version: dict = {}
         self.__users: dict[str, str] = []
         self.__usernames: set[str] = set()
         self.themes: dict[str, str] = {}
@@ -36,13 +40,12 @@ class WpSite:
         self.__files: set[str] = set()
         self.__logins: dict[str, str] = {}
         self.__admin: dict[str, str] = {}
-        self.__ips: list[str] = []
+        self.__ips: set[str] = set()
         self.__ports: dict[str, list[dict[str, str]]] = {}
         self.__linked_urls: set[str] = set()
-
-        # self.__check_is_wp()
-
-        # self.__check_is_installed()
+        self.all_forms: list = []
+        self.injection_urls: set[str] = set()
+        self.sqli_vulnerable_urls: set[str] = set()
 
     @property
     def linked_urls(self) -> set[str]:
@@ -72,14 +75,6 @@ class WpSite:
     def users(self, user: dict):
         self.__users.add(user)
 
-    # @property
-    # def themes(self) -> dict:
-    #     return sel__themes
-
-    # @property
-    # def plugins(self) -> dict:
-    #   return self.__plugins
-
     @property
     def files(self) -> set[str]:
         return self.__files
@@ -92,7 +87,7 @@ class WpSite:
         return self.__logins
 
     @property
-    def wp_version(self) -> str:
+    def wp_version(self) -> dict:
         return self.__wp_version
 
     @property
@@ -100,7 +95,6 @@ class WpSite:
         complete_url = self.http_ver + self.__url + "/"
         return complete_url
 
-    # @Printer.info
     def print_user_agent(self) -> str:
         return self.__user_agent
 
@@ -116,6 +110,8 @@ class WpSite:
             return "http://"
 
     def __check_url_integrity(self, url: str) -> str:
+        if url == "localhost:5000" or url == "127.0.0.1:5000":
+            return "localhost:5000"
 
         url = url.lower()
 
@@ -170,11 +166,11 @@ class WpSite:
             self.url, headers={"User-Agent": self.__user_agent}, verify=False
         )
         if not "wp-" in res.text:
-            return False
+            raise NameError(f"The site {self.url} is not on WordPress engine.")
         else:
             return True
 
-    def __check_is_wp(self) -> None:
+    def check_is_wp(self) -> None:
         if self.__is_wp() is False:
             raise NameError(f"The site {self.url} is not on WordPress engine.")
 
@@ -196,9 +192,45 @@ class WpSite:
 
         return True
 
-    def __check_is_installed(self) -> None:
+    def check_is_installed(self) -> None:
         if self.__is_installed() is False:
             print("The Website is currently in install mode.")
+
+    def detect_usernames(self) -> bool:
+        for i in range(1, 10000):
+            try:
+                response = requests.get(f"{self.url}?author={i}", verify=False)
+
+                if (
+                    response.status_code == 404
+                    or "The page can't be found." in response.text
+                ):
+                    break
+
+                soup = BeautifulSoup(response.text, "html.parser")
+
+                title_tag = soup.find("title")
+
+                if title_tag:
+                    title_text = title_tag.get_text()
+                    author_name = title_text.split(",")[0]
+                    self.usernames.add(author_name)
+
+            except requests.exceptions.RequestException:
+                break
+
+        for user in self.usernames.copy():
+            try:
+                response = requests.get(f"{self.url}/author/{user}", verify=False)
+
+                if (
+                    response.status_code == 404
+                    or "The page can't be found." in response.text
+                ):
+                    self.usernames.remove(user)
+
+            except requests.exceptions.RequestException:
+                continue
 
     def detect_users(self) -> bool:
         slug: tuple[str] = ("?rest_route=/wp/v2/users", "wp-json/wp/v2/users")
@@ -233,8 +265,6 @@ class WpSite:
                 }
             )
 
-            # FIXME: add a method
-
         return True
 
     def detect_robots_file(self) -> bool:
@@ -247,11 +277,6 @@ class WpSite:
             self.add_file(slug)
             return True
         return False
-
-        # lines = res.text.split('\n')
-        # for l in lines:
-        #     if "Disallow:" in l:
-        #         print("\tInteresting entry from robots.txt: %s" % (l))
 
     def detect_readme_file(self) -> bool:
         slug = "readme.html"
@@ -268,21 +293,6 @@ class WpSite:
             return True
 
         return False
-        # regular_expression = "Version (.*)"
-        # regular_expression = re.compile(regular_expression)
-        # matches = regular_expression.findall(res.text)
-
-        # if len(matches) > 0 and matches[0] != None and matches[0] != "":
-        #     self.version = matches[0]
-        #     print(
-        #         "The Wordpress '%s' file exposing a version number: %s"
-        #         % (self.url + "readme.html", matches[0])
-        #     )
-        # else:
-        #     print(
-        #         "The Wordpress '%s' file is exposing a version number but it is not in the expected format"
-        #         % (self.url + "readme.html")
-        #     )
 
     def detect_wp_version(self):
         if self.detect_wp_version_feed() == False:
@@ -303,7 +313,7 @@ class WpSite:
         if found_matches == []:
             return False
 
-        self.__wp_version = found_matches[0]
+        self.__wp_version[found_matches[0]] = "vulns Not found"
 
         return True
 
@@ -319,7 +329,7 @@ class WpSite:
         if found_matches == []:
             return False
 
-        self.__wp_version = found_matches[0]
+        self.__wp_version[found_matches[0]] = "vulns Not found"
 
         return True
 
@@ -331,14 +341,12 @@ class WpSite:
         slug: str = "wp-content/themes/"
         regular_expression = re.compile(rf"{slug}(.*?)/.*?[css|js].*?ver=([0-9\.]*)")
         found_matches = regular_expression.findall(res.text)
-        themes: dict = {}
 
         if found_matches == []:
             return False
 
         for match in found_matches:
-            themes[match[0]] = None
-        self.themes = themes  # FIXME: add a method
+            self.themes[match[0]] = "vulns Not found"
 
         return True
 
@@ -350,15 +358,12 @@ class WpSite:
         slug: str = "wp-content/plugins/"
         regular_expression = re.compile(rf"{slug}(.*?)/.*?[css|js].*?ver=([0-9\.]*)")
         found_matches = regular_expression.findall(res.text)
-        plugins: dict = {}
 
         if found_matches == []:
             return False
 
         for match in found_matches:
-            plugins[match[0]] = None
-
-        self.plugins = plugins  # FIXME: add a method
+            self.plugins[match[0]] = "vulns Not found"
 
         return True
 
@@ -410,9 +415,6 @@ class WpSite:
                     "%s directory has directory listing enabled : %s"
                     % (name, self.url + directory)
                 )
-                # yield True
-
-            # yield False
 
     def detect_xml_rpc(self) -> bool:
         slug: str = "xmlrpc.php"

@@ -1,3 +1,0 @@
-huepy
-requests
-tqdm

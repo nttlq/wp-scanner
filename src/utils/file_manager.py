@@ -1,13 +1,11 @@
 import os
-from urllib.parse import urlparse, urlunparse
-import datetime
+from urllib.parse import urlparse
 
 
 class FileManager:
     def __init__(self, scanner):
         self.__folder_path = self.set_folder(scanner.url)
         self.__create_folder()
-        # self.create_file("report.txt")
 
     def set_folder(self, url: str):
         url = urlparse(url).netloc
@@ -19,14 +17,14 @@ class FileManager:
         return self.__folder_path
 
     def __create_folder(self):
-        # print(self.folder_path)
+        if self.folder_path == "src/public/localhost:5000":
+            self.__folder_path = "src/public/localhost"
         try:
             os.mkdir(self.folder_path)
         except TypeError:
             raise NotADirectoryError("Invalid path")
         except FileExistsError:
             pass
-            # print("Folder already exists")
 
         return True
 

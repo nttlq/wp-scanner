@@ -1,4 +1,4 @@
-from colorama import Fore, Back, Style
+from colorama import Fore, Style
 
 
 class Printer:
@@ -47,6 +47,7 @@ class Printer:
     @warning
     def author() -> str:
         string = ""
+        string += "Created by\n"
         string += (
             r"  _____ _                           _    _             _ _            "
             + "\n"
