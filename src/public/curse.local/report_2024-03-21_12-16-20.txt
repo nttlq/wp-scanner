@@ -1,0 +1,17 @@
+[Report]
+URL: https://curse.local/
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.16) Gecko/20120421 Gecko Firefox/11.0
+WP version: {}
+Themes: {}
+Plugins: {}
+Logins: {}
+Users: []
+Files: set()
+Usernames: set()
+Admin: {}
+Ips: set()
+Ports: {}
+All Forms: []
+Linked urls: set()
+Not Found
+Not found

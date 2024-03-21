@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+from datetime import datetime
 
 from colorama import Fore, Style
 
@@ -200,7 +201,6 @@ class Menu:
                     else:
                         self.wp_site.themes[theme] = "No vulnerabilities found"
             elif answ == "3":
-                # res = self.wps_api.get_requests_to_api_remaining()
                 res = self.wps_api.get_requests_to_api_remaining_of_all_tokens()
                 print("Requests remaining: ", res)
         elif answ == "1":
@@ -208,16 +208,16 @@ class Menu:
 
     def scan_all(self):
         self.wp_site.detect_wp_version()
-        # self.wp_site.detect_users()
-        # self.wp_site.detect_usernames()
-        # self.wp_site.detect_themes()
-        # self.wp_site.detect_plugins()
-        # self.wp_site.detect_robots_file()
-        # self.wp_site.detect_readme_file()
-        # self.wp_site.is_directory_listing()
-        # self.wp_site.detect_xml_rpc()
-        # self.wp_site.is_debug_log()
-        # self.wp_site.detect_backups()
+        self.wp_site.detect_users()
+        self.wp_site.detect_usernames()
+        self.wp_site.detect_themes()
+        self.wp_site.detect_plugins()
+        self.wp_site.detect_robots_file()
+        self.wp_site.detect_readme_file()
+        self.wp_site.is_directory_listing()
+        self.wp_site.detect_xml_rpc()
+        self.wp_site.is_debug_log()
+        self.wp_site.detect_backups()
 
     def brute_forcing(self):
         db = input(
@@ -252,25 +252,102 @@ class Menu:
     def save_report(self):
         file_content = ""
         file_content += "[Report]" + "\n"
-        file_content += "URL: " + str(self.wp_site.url) + "\n"
-        file_content += "User-Agent: " + str(self.wp_site.user_agent) + "\n"
-        file_content += "WP version: " + str(self.wp_site.wp_version) + "\n"
-        file_content += "Themes: " + str(self.wp_site.themes) + "\n"
-        file_content += "Plugins: " + str(self.wp_site.plugins) + "\n"
-        file_content += "Logins: " + str(self.wp_site.logins) + "\n"
-        file_content += "Users: " + str(self.wp_site.users) + "\n"
-        file_content += "Files: " + str(self.wp_site.files) + "\n"
-        file_content += "Usernames: " + str(self.wp_site.usernames) + "\n"
-        file_content += "Admin: " + str(self.wp_site.admin) + "\n"
-        file_content += "Ips: " + str(self.wp_site.ips) + "\n"
-        file_content += "Ports: " + str(self.wp_site.ports) + "\n"
-        file_content += "All Forms: " + str(self.wp_site.all_forms) + "\n"
-        file_content += "Linked urls: " + str(self.wp_site.linked_urls) + "\n"
-        file_content += "Injection urls: " + str(self.wp_site.injection_urls) + "\n"
         file_content += (
-            "Sqli vulnerable urls: " + str(self.wp_site.sqli_vulnerable_urls) + "\n"
+            "URL: "
+            + (str(self.wp_site.url) if self.wp_site.url else "Not found")
+            + "\n"
         )
-        self.file_manager.save_file("report.txt", file_content)
+        file_content += (
+            "User-Agent: "
+            + (str(self.wp_site.user_agent) if self.wp_site.user_agent else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "WP version: "
+            + (str(self.wp_site.wp_version) if self.wp_site.wp_version else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Themes: "
+            + (str(self.wp_site.themes) if self.wp_site.themes else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Plugins: "
+            + (str(self.wp_site.plugins) if self.wp_site.plugins else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Logins: "
+            + (str(self.wp_site.logins) if self.wp_site.logins else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Users: "
+            + (str(self.wp_site.users) if self.wp_site.users else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Files: "
+            + (str(self.wp_site.files) if self.wp_site.files else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Usernames: "
+            + (str(self.wp_site.usernames) if self.wp_site.usernames else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Admin: "
+            + (str(self.wp_site.admin) if self.wp_site.admin else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Ips: "
+            + (str(self.wp_site.ips) if self.wp_site.ips else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Ports: "
+            + (str(self.wp_site.ports) if self.wp_site.ports else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "All Forms: "
+            + (str(self.wp_site.all_forms) if self.wp_site.all_forms else "Not found")
+            + "\n"
+        )
+        file_content += (
+            "Linked urls: "
+            + (
+                str(self.wp_site.linked_urls)
+                if self.wp_site.linked_urls
+                else "Not found"
+            )
+            + "\n"
+        )
+        file_content += (
+            "Injection urls: "
+            + (
+                str(self.wp_site.injection_urls)
+                if self.wp_site.injection_urls
+                else "Not Found"
+            )
+            + "\n"
+        )
+        file_content += (
+            "Sqli vulnerable urls: "
+            + (
+                str(self.wp_site.sqli_vulnerable_urls)
+                if self.wp_site.sqli_vulnerable_urls
+                else "Not found"
+            )
+            + "\n"
+        )
+        now = datetime.now()
+        filename = "report_" + now.strftime("%Y-%m-%d_%H-%M-%S") + ".txt"
+
+        self.file_manager.save_file(filename, file_content)
 
     def show_report(self):
         print(Fore.LIGHTGREEN_EX + "[Report]" + Style.RESET_ALL)
