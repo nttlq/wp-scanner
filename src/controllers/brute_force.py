@@ -111,6 +111,7 @@ class Bruteforce:
             self.__sign_in(s, username, password)
 
     def bruteforce(self, usernames=False, passwords=False, max_workers=10):
+        print("Starting bruteforce...")
         if not usernames:
             usernames = self.users
         if not passwords:
@@ -138,6 +139,8 @@ class Bruteforce:
                             break
 
     def bruteforce3(self, usernames=False, passwords=False, max_workers=10):
+        print("Starting bruteforce...")
+
         if not usernames:
             usernames = self.users
         if not passwords:

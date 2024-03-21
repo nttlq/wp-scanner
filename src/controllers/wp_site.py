@@ -110,6 +110,7 @@ class WpSite:
             return "http://"
 
     def __check_url_integrity(self, url: str) -> str:
+        print("Checking URL integrity...")
         if url == "localhost:5000" or url == "127.0.0.1:5000":
             return "localhost:5000"
 
@@ -149,6 +150,7 @@ class WpSite:
         return url
 
     def __set_user_agent(self, system: str = "rand") -> str:
+        print("Setting user agent...")
         config = configparser.ConfigParser()
         config.read("src/db/user-agents.ini")
 
@@ -171,6 +173,7 @@ class WpSite:
             return True
 
     def check_is_wp(self) -> None:
+        print("Checking if the website is on WordPress engine...")
         if self.__is_wp() is False:
             raise NameError(f"The site {self.url} is not on WordPress engine.")
 
@@ -193,10 +196,12 @@ class WpSite:
         return True
 
     def check_is_installed(self) -> None:
+        print("Checking if the website is installed...")
         if self.__is_installed() is False:
             print("The Website is currently in install mode.")
 
     def detect_usernames(self) -> bool:
+        print("Detecting usernames...")
         for i in range(1, 10000):
             try:
                 response = requests.get(f"{self.url}?author={i}", verify=False)
@@ -233,15 +238,14 @@ class WpSite:
                 continue
 
     def detect_users(self) -> bool:
+        print("Detecting users...")
         slug: tuple[str] = ("?rest_route=/wp/v2/users", "wp-json/wp/v2/users")
-        print("url: ", self.url + slug[0])
         res = requests.get(
             self.url + slug[0],
             headers={"User-Agent": self.user_agent},
             allow_redirects=False,
             verify=False,
         )
-        print("USERS: ", res)
         if res.status_code != 200:
             res = requests.get(
                 self.url + slug[1],
@@ -249,10 +253,8 @@ class WpSite:
                 allow_redirects=False,
                 verify=False,
             )
-        print("USERS: ", res.json())
         if res.status_code != 200:
             return False
-        print("USERS: ", res.json())
         users = res.json()
         if users == []:
             return False
@@ -268,6 +270,7 @@ class WpSite:
         return True
 
     def detect_robots_file(self) -> bool:
+        print("Detecting robots.txt file...")
         slug: str = "robots.txt"
         res = requests.get(
             self.url + slug, headers={"User-Agent": self.__user_agent}, verify=False
@@ -279,6 +282,7 @@ class WpSite:
         return False
 
     def detect_readme_file(self) -> bool:
+        print("Detecting readme.html file...")
         slug = "readme.html"
 
         res = requests.get(
@@ -295,6 +299,7 @@ class WpSite:
         return False
 
     def detect_wp_version(self):
+        print("Detecting WordPress version...")
         if self.detect_wp_version_feed() == False:
             self.detect_wp_version_meta()
 
@@ -334,6 +339,7 @@ class WpSite:
         return True
 
     def detect_themes(self) -> bool:
+        print("Detecting themes...")
         res = requests.get(
             self.url, headers={"User-Agent": self.__user_agent}, verify=False
         )
@@ -351,6 +357,7 @@ class WpSite:
         return True
 
     def detect_plugins(self) -> bool:
+        print("Detecting plugins...")
         res = requests.get(
             self.url, headers={"User-Agent": self.__user_agent}, verify=False
         )
@@ -367,33 +374,8 @@ class WpSite:
 
         return True
 
-    def check_themes(self, themes: tuple[str] = False) -> Generator[str, None, None]:
-        if not themes:
-            themes: tuple[str] = (
-                "astra",
-                "twentytwenty",
-                "twentytwentytwo",
-                "twentynineteen",
-                "twentysixteen",
-                "twentyseventeen",
-                "twentyfifteen",
-                "twentyfourteen",
-                "twentythirteen",
-                "twentytwelve",
-                "twentyeleven",
-                "twentyten",
-            )
-        slug: str = "wp-content/themes/"
-        for theme in themes:
-            res = requests.get(
-                self.url + slug + theme,
-                headers={"User-Agent": self.__user_agent},
-                verify=False,
-            )
-            if res.status_code == 200:
-                yield f"A default theme has been found in: {self.url + slug + theme}"
-
     def is_directory_listing(self):
+        print("Checking for directory listing...")
         directories = [
             "wp-content/uploads/",
             "wp-content/plugins/",
@@ -417,6 +399,7 @@ class WpSite:
                 )
 
     def detect_xml_rpc(self) -> bool:
+        print("Detecting xmlrpc.php file...")
         slug: str = "xmlrpc.php"
         res = requests.get(
             self.url + slug,
@@ -429,6 +412,7 @@ class WpSite:
         return False
 
     def is_debug_log(self):
+        print("Checking for debug.log file...")
         r = requests.get(
             self.url + "debug.log",
             headers={"User-Agent": self.__user_agent},
@@ -439,6 +423,7 @@ class WpSite:
             print("Debug log file found: %s" % (self.url + "debug.log"))
 
     def detect_backups(self):
+        print("Detecting backup files...")
         backups = (
             "wp-config.php.bck",
             ".wp-config.php.swp",

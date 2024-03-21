@@ -23,6 +23,8 @@ class Fuzzing:
         return self.__filepath
 
     def fuzzing_themes(self):
+        print("Fuzzing themes...")
+        print("Press 'q' to stop the fuzzing.")
         keyboard.on_press_key("q", self.stop)  # Stop on 'q' key press
         with open(self.filepath + "wp_themes.txt") as themes:
             themes = themes.readlines()
@@ -40,6 +42,8 @@ class Fuzzing:
                     self.themes[theme.split("/")[-2]] = "vulns Not found"
 
     def fuzzing_plugins(self):
+        print("Fuzzing plugins...")
+        print("Press 'q' to stop the fuzzing.")
         keyboard.on_press_key("q", self.stop)  # Stop on 'q' key press
 
         with open(self.filepath + "wp_plugins.txt") as plugins:
@@ -58,6 +62,9 @@ class Fuzzing:
                     self.plugins[plugin.split("/")[-2]] = "vulns Not found"
 
     def fuzzing_components(self):
+        print("Fuzzing components...")
+        print("Press 'q' to stop the fuzzing.")
+
         keyboard.on_press_key("q", self.stop)  # Stop on 'q' key press
 
         with open(self.filepath + "wp_components.txt") as components:

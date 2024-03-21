@@ -1,4 +1,3 @@
-import os
 import json
 
 import requests
@@ -60,7 +59,21 @@ class WpsApi:
             return False
         return True
 
+    def get_requests_to_api_remaining_of_all_tokens(self) -> int:
+        total_requests_remaining = 0
+        print("Getting requests remaining of all tokens...")
+        print("Available tokens: ", self.__tokens)
+        for token in self.__tokens:
+            header = self.__set_header(token)
+            res = requests.get(self.__url + "status", headers=header)
+            self.__check_status_code(res.status_code)
+            result = res.json()
+            requests_remaining = result.get("requests_remaining", 0)
+            total_requests_remaining += requests_remaining
+        return total_requests_remaining
+
     def get_requests_to_api_remaining(self) -> int:
+        print("Getting requests remaining...")
         slug: str = "status"
         get_status_url: str = self.url + slug
         res = requests.get(get_status_url, headers=self.header)
@@ -83,6 +96,7 @@ class WpsApi:
         return True
 
     def get_vulnerabilities_by_wp_version(self, version: int) -> list[dict]:
+        print(f"Getting vulnerabilities by version {version}...")
         slug: str = f"wordpresses/{version}"
         url: str = self.url + slug
         res = requests.get(url, headers=self.header)
@@ -97,6 +111,7 @@ class WpsApi:
         return vulnerabilities
 
     def get_vulnerabilities_by_plugin(self, plugin: str) -> list[dict]:
+        print(f"Getting vulnerabilities by plugin {plugin}...")
         slug: str = f"plugins/{plugin}"
         url: str = self.url + slug
         res = requests.get(url, headers=self.header)
@@ -115,6 +130,7 @@ class WpsApi:
         return vulnerabilities
 
     def get_vulnerabilities_by_theme(self, theme: str) -> list[dict]:
+        print(f"Getting vulnerabilities by theme {theme}...")
         slug: str = f"themes/{theme}"
         url: str = self.url + slug
         res = requests.get(url, headers=self.header)

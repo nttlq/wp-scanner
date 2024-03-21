@@ -88,6 +88,7 @@ class SQLInjectionScanner:
         return self.__url
 
     def set_payloads(self, filepath="src/db/sql_payloads.txt"):
+        print("Setting payloads...")
         try:
             with open(filepath, "r") as file:
                 payloads = file.read().splitlines()
@@ -96,6 +97,7 @@ class SQLInjectionScanner:
             raise FileNotFoundError("Payloads file not found.")
 
     def vulnerable(self, res) -> bool:
+        print("Checking for Vulnerability...")
         for _, errors in self.ERROR_PATTERNS.items():
             for error in errors:
                 if re.compile(error).search(res):
@@ -103,6 +105,8 @@ class SQLInjectionScanner:
         return False
 
     def detect_sqli_vulnerability(self, custom_payloads=None):
+        print("Detecting SQL Injection Vulnerability...")
+        print("Press 'q' to stop the Sqli scanning.")
         keyboard.on_press_key("q", self.stop)
         if custom_payloads:
             payloads = self.set_payloads(custom_payloads)
@@ -110,14 +114,14 @@ class SQLInjectionScanner:
             payloads = self.set_payloads()
 
         for url in self.injection_urls:
+            print("Scanning: ", url)
             for payload in payloads:
+                print("Payload: ", payload)
                 if self.__stop:
                     print("Sqli scanning stopped.")
                     self.__stop = False
                     break
                 complete_url = url + payload
-                print("payload:", payload)
-                print("final url:", complete_url)
                 try:
                     req = requests.get("{}".format(complete_url))
                     res = req.text

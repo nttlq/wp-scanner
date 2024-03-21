@@ -1,10 +1,8 @@
 import sys
 import socket
-from datetime import datetime
 from ipaddress import ip_address
 from urllib.parse import urlparse
 
-import pyfiglet
 import keyboard
 
 
@@ -27,6 +25,7 @@ class PortScanner:
         return True if (ip_address(IP).is_private) else False
 
     def get_ips(self) -> list:
+        print("Getting IPs for: ", self.url)
         try:
             ips = socket.gethostbyname_ex(self.url)
         except socket.gaierror:
@@ -36,6 +35,7 @@ class PortScanner:
             self.ips.add(ip)
 
     def banner_grabbing(self, ip, port):
+        print("Banner grabbing for port: ", port)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1)
@@ -70,6 +70,7 @@ class PortScanner:
             return ""
 
     def scan_ports_in_range(self, port_begin: int, port_end: int):
+        print("Scanning ports in range {} - {}".format(port_begin, port_end))
         keyboard.on_press_key("q", self.stop)
 
         if port_begin > port_end:
@@ -121,6 +122,7 @@ class PortScanner:
             sys.exit()
 
     def scan_ports(self, *ports):
+        print("Scanning ports: ", ports)
         if type(ports) == int:
             ports = list(ports)
         elif type(ports) == tuple or type(ports) == list:

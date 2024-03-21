@@ -1,7 +1,7 @@
 [Report]
 URL: https://curse.local/
-User-Agent: Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en) AppleWebKit/418.8 (KHTML, like Gecko) Safari/419.3
-WP version: {}
+User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_0_3 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B511 Safari/9537.53
+WP version: {'6.4.3': 'No vulnerabilities found'}
 Themes: {}
 Plugins: {}
 Logins: {}
@@ -9,7 +9,7 @@ Users: []
 Files: set()
 Usernames: set()
 Admin: {}
-Ips: {'127.0.0.1'}
+Ips: set()
 Ports: {}
 All Forms: []
 Linked urls: set()

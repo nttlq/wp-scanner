@@ -48,6 +48,7 @@ class Crawler:
             print(f"Error in request to {current_url}: {e}")
 
     def crawl_website(self, max_depth: int = None):
+        print("Crawling website...")
         if max_depth:
             if type(max_depth) != int:
                 raise TypeError("max_depth must be an integer")
@@ -102,12 +103,16 @@ class Crawler:
         return detailsOfForm
 
     def detect_all_forms(self, url):
+        print("Detecting forms...")
         forms = self.detect_forms(url)
         for form in forms:
             details = self.get_form_details(form)
             self.all_forms.append(details)
 
     def find_injection_urls(self, main_url_only: bool = None):
+        print("Finding injection URLs...")
+        print("Press 'q' to stop the crawling.")
+
         keyboard.on_press_key("q", self.stop)
 
         if main_url_only is None or main_url_only is False:

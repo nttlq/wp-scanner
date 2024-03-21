@@ -151,7 +151,6 @@ class Menu:
 
     def scan_ports(self, *ports):
         port_list = list(ports)
-        print("PORTS: ", type(port_list))
         self.ports_scanner.scan_ports(*port_list)
 
     def check_sqli_vulnerabilities(self):
@@ -172,36 +171,53 @@ class Menu:
                 "Check vulnerabilities for wp version, plugins or themes? [0][1][2]\nCheck requests to api remaining[3]: "
             )
             if answ == "0":
-                wp_version = self.wp_site.wp_version.keys()
-                for version in wp_version:
-                    vulnerabilities = self.wps_api.get_vulnerabilities_by_wp_version(
-                        version
-                    )
-                    self.wp_site.wp_version[version] = vulnerabilities
+                print("Getting vulnerabilities by WP version...")
+                wp_version_str = list(self.wp_site.wp_version.keys())[0]
+                wp_version_int = int(wp_version_str.replace(".", ""))
+                vulnerabilities = self.wps_api.get_vulnerabilities_by_wp_version(
+                    wp_version_int
+                )
+                if vulnerabilities:
+                    self.wp_site.wp_version[wp_version_str] = vulnerabilities
+                else:
+                    self.wp_site.wp_version[wp_version_str] = "No vulnerabilities found"
             elif answ == "1":
+                print("Getting vulnerabilities by plugin...")
                 plugins = self.wp_site.plugins.keys()
                 for plugin in plugins:
                     vulnerabilities = self.wps_api.get_vulnerabilities_by_plugin(plugin)
-                    self.wp_site.plugins[plugin] = vulnerabilities
+                    if vulnerabilities:
+                        self.wp_site.plugins[plugin] = vulnerabilities
+                    else:
+                        self.wp_site.plugins[plugin] = "No vulnerabilities found"
             elif answ == "2":
+                print("Getting vulnerabilities by theme...")
                 themes = self.wp_site.themes.keys()
                 for theme in themes:
                     vulnerabilities = self.wps_api.get_vulnerabilities_by_theme(theme)
-                    self.wp_site.themes[theme] = vulnerabilities
+                    if vulnerabilities:
+                        self.wp_site.themes[theme] = vulnerabilities
+                    else:
+                        self.wp_site.themes[theme] = "No vulnerabilities found"
             elif answ == "3":
-                res = self.wps_api.get_requests_to_api_remaining()
+                # res = self.wps_api.get_requests_to_api_remaining()
+                res = self.wps_api.get_requests_to_api_remaining_of_all_tokens()
                 print("Requests remaining: ", res)
         elif answ == "1":
             self.check_sqli_vulnerabilities()
 
     def scan_all(self):
         self.wp_site.detect_wp_version()
-        self.wp_site.detect_users()
-        self.wp_site.detect_usernames()
-        self.wp_site.detect_themes()
-        self.wp_site.detect_plugins()
-        self.wp_site.detect_robots_file()
-        self.wp_site.detect_readme_file()
+        # self.wp_site.detect_users()
+        # self.wp_site.detect_usernames()
+        # self.wp_site.detect_themes()
+        # self.wp_site.detect_plugins()
+        # self.wp_site.detect_robots_file()
+        # self.wp_site.detect_readme_file()
+        # self.wp_site.is_directory_listing()
+        # self.wp_site.detect_xml_rpc()
+        # self.wp_site.is_debug_log()
+        # self.wp_site.detect_backups()
 
     def brute_forcing(self):
         db = input(
@@ -257,7 +273,7 @@ class Menu:
         self.file_manager.save_file("report.txt", file_content)
 
     def show_report(self):
-        print("[Report]")
+        print(Fore.LIGHTGREEN_EX + "[Report]" + Style.RESET_ALL)
         print("URL: ", self.wp_site.url)
         print("User-Agent: ", self.wp_site.user_agent)
         print(
