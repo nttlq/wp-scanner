@@ -1,0 +1,17 @@
+[Report]
+URL: http://localhost:5000/
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.24 Safari/535.1
+WP version: Not found
+Themes: Not found
+Plugins: Not found
+Logins: Not found
+Users: Not found
+Files: Not found
+Usernames: Not found
+Admin: Not found
+Ips: {'localhost'}
+Ports: Not found
+All Forms: Not found
+Linked urls: Not found
+Injection urls: Not Found
+Sqli vulnerable urls: Not found

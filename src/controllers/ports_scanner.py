@@ -95,6 +95,7 @@ class PortScanner:
                 result_ports = []
 
                 for port in range(port_begin, port_end + 1):
+                    print(f"Scanning port: {port} for {ip}...")
                     if self.__stop:
                         print("Port scanning stopped.")
                         self.__stop = False
@@ -113,8 +114,10 @@ class PortScanner:
                         print(f"ports in {ip}: ", result_ports)
                     s.close()
 
-                if result_ports == []:
+                if result_ports == [] or result_ports == None:
                     result_ports = None
+                    print("Port is not open or error occurred.")
+                    return
                 if ip not in self.ports:
                     self.ports[ip] = []
                 for result in result_ports:
@@ -140,6 +143,7 @@ class PortScanner:
         for ip in self.ips:
             result_ports = []
             for port in ports:
+                print(f"Scanning port: {port} for {ip}...")
                 try:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     socket.setdefaulttimeout(1)
@@ -152,13 +156,14 @@ class PortScanner:
                         result_ports.append(port_info)
 
                         print("Port {} is open".format(port))
-                        print("ports: ", result_ports)
                     s.close()
                 except socket.error:
                     print("\n Hostname Could Not Be Resolved !!!!")
 
-            if result_ports == []:
+            if result_ports == [] or result_ports == None:
                 result_ports = None
+                print("Port is not open or error occurred.")
+                return
             if ip not in self.ports:
                 self.ports[ip] = []
             for result in result_ports:
