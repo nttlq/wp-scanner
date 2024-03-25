@@ -33,14 +33,15 @@ class Menu:
     @Printer.info
     def options() -> str:
         string = ""
-        string += "OPTIONS" + "\n"
-        string += "[1] Scan" "\n"
-        string += "[2] Brutforce" "\n"
-        string += "[3] Check vulnerabilities" "\n"
-        string += "[4] Scan ports" "\n"
+        string += "OPTIONS" "\n"
+        string += "[1] Basic Scan" "\n"
+        string += "[2] Brute-force" "\n"
+        string += "[3] Vulnerabilities Scan" "\n"
+        string += "[4] Ports Scan" "\n"
         string += "[5] Crawler" "\n"
         string += "[6] Fuzzing" "\n"
         string += "[7] Show Report" "\n"
+        string += "[8] Help" "\n"
         string += "[0] Exit"
         return string
 
@@ -54,7 +55,7 @@ class Menu:
             os.system("cls")
 
     def check_is_wp(self):
-        option = input("Do you want to check if the site is a WordPress site? [1][0]: ")
+        option = input("Do you want to check if the site is a WordPress site? [0][1]: ")
         if option == "y" or option == "1" or option == "":
             self.wp_site.check_is_wp()
             self.wp_site.check_is_installed()
@@ -84,12 +85,73 @@ class Menu:
                 self.fuzzing_site()
             elif option == "7":
                 self.show_report()
+            elif option == "8":
+                self.show_help()
             elif option == "exit" or option == "0":
                 break
             elif option == "clear":
                 Menu.clear()
             else:
                 print("Invalid option")
+
+    def show_help(self):
+        print(
+            Fore.GREEN
+            + """
+    [1] Basic Scan
+    - Check if the site is a WordPress site
+    - Check if WordPress is installed
+    - Check WordPress version
+    - Check users
+    - Check usernames
+    - Check themes
+    - Check plugins
+    - Check robots.txt
+    - Check readme.html
+    - Check directory listing
+    - Check xml-rpc
+    - Check debug.log
+    - Check backups
+
+    [2] Brute-force
+    - Brute-force login page
+    - Brute-force login page with custom logins and passwords
+    - Brute-force login page with finded usernames
+
+    [3] Vulnerabilities Scan
+    - Check vulnerabilities for WordPress version
+    - Check vulnerabilities for plugins
+    - Check vulnerabilities for themes
+    - Check vulnerabilities for SQL injections
+
+    [4] Ports Scan
+    - Scan ports
+    - Scan ports in range
+
+    [5] Crawler
+    - Crawl website
+    - Find injection urls
+    - Find linked urls
+
+    [6] Fuzzing
+    - Fuzzing for themes
+    - Fuzzing for plugins
+    - Fuzzing for components
+
+    [7] Show Report
+    - Show report with all information
+
+    [b][back] 
+    - Back to main menu
+
+    [clear] 
+    - Clear the screen
+
+    [0] Exit
+    - Exit from the program
+            """
+            + Style.RESET_ALL
+        )
 
     def is_valid_ports_input(self, ports):
         # Check if input is in the format "port-port"
@@ -104,10 +166,10 @@ class Menu:
         return False
 
     def check_ports(self):
-        answ = input("Get IPs or scan ports? [0][1]: ")
+        answ = input("Get IPs[0] or scan ports[1]?\n[0][1][b]: ")
         if answ == "0":
             self.ports_scanner.get_ips()
-        else:
+        elif answ == "1":
             if not self.wp_site.ips:
                 print("Scan IPs first!")
                 return
@@ -122,15 +184,21 @@ class Menu:
                 print(
                     "Invalid input. Please enter ports in the format 'port-port' or 'port port ... port'."
                 )
+        elif answ == "b" or answ == "back":
+            return
 
     def fuzzing_site(self):
-        answ = input("Fuzzing for themes or plugins or components? [0][1][2]: ")
+        answ = input(
+            "Fuzzing for themes[0] or plugins[1] or components[2]?\n[0][1][2][b]: "
+        )
         if answ == "0":
             self.fuzzing.fuzzing_themes()
         elif answ == "1":
             self.fuzzing.fuzzing_plugins()
         elif answ == "2":
             self.fuzzing.fuzzing_components()
+        elif answ == "b" or answ == "back":
+            return
         else:
             print("Invalid option")
 
@@ -138,17 +206,20 @@ class Menu:
         self.ports_scanner.scan_ports_in_range(start_port, end_port)
 
     def crawl_website(self):
-        answ = input("Scan site for linked urls or injection urls? [1][0]: ")
-        if answ == "1":
+        answ = input("Crawl site for linked urls[0] or injection urls[1]?\n[0][1][b]: ")
+        if answ == "0":
             max_depth = int(input("Enter max depth: "))
             self.crawler.crawl_website(max_depth)
-        else:
-            answ = input("Main url only? [1][0]: ")
+        elif answ == "1":
+            answ = input("Main url only?\n[0][1][b]: ")
             if answ == "1":
-                self.crawler.find_injection_urls(True)
-            else:
-
+                self.crawler.find_injection_urls(main_url_only=True)
+            elif answ == "0":
                 self.crawler.find_injection_urls()
+            elif answ == "b" or answ == "back":
+                return
+        elif answ == "b" or answ == "back":
+            return
 
     def scan_ports(self, *ports):
         port_list = list(ports)
@@ -156,20 +227,24 @@ class Menu:
 
     def check_sqli_vulnerabilities(self):
         if self.wp_site.injection_urls:
-            answ = input("Use custom payloads or default? [1][0]: ")
+            answ = input("Use custom payloads[1] or default[0]?\n[0][1][b]: ")
             if answ == "1":
                 answ = input("Enter the path to the file with payloads: ")
                 self.sqliscanner.detect_sqli_vulnerability(answ)
-            else:
+            elif answ == "0":
                 self.sqliscanner.detect_sqli_vulnerability()
+            elif answ == "b" or answ == "back":
+                return
         else:
             print("Scan site for sqli urls first!")
 
     def check_vulnerabilities(self):
-        answ = input("Check vulnerabilities for wp or sql injections? [0][1]: ")
+        answ = input(
+            "Check vulnerabilities for wp[0] or sql injections[1]?\n[0][1][b]: "
+        )
         if answ == "0":
             answ = input(
-                "Check vulnerabilities for wp version, plugins or themes? [0][1][2]\nCheck requests to api remaining[3]: "
+                "Check vulnerabilities for wp version[0], plugins[1] or themes[2]?\nCheck requests to api remaining[3]\n[0][1][2][3][b]: "
             )
             if answ == "0":
                 print("Getting vulnerabilities by WP version...")
@@ -203,8 +278,12 @@ class Menu:
             elif answ == "3":
                 res = self.wps_api.get_requests_to_api_remaining_of_all_tokens()
                 print("Requests remaining: ", res)
+            elif answ == "b" or answ == "back":
+                return
         elif answ == "1":
             self.check_sqli_vulnerabilities()
+        elif answ == "b" or answ == "back":
+            return
 
     def scan_all(self):
         self.wp_site.detect_wp_version()
@@ -220,11 +299,11 @@ class Menu:
         self.wp_site.detect_backups()
 
     def brute_forcing(self):
-        db = input(
-            "Enter the custom database for logins and passwords or Default [1][0]: "
+        answ = input(
+            "Enter the custom database for logins and passwords[1] or Default[0]\n[0][1][b]: "
         )
-        if db == "0":
-            answ = input("Usernames finded from site or predefined? [1][0]: ")
+        if answ == "0":
+            answ = input("Usernames finded from site[1] or predefined[0]?\n[0][1][b]: ")
             if answ == "1":
                 if self.wp_site.usernames:
                     logins = self.wp_site.usernames
@@ -232,12 +311,14 @@ class Menu:
                 else:
                     print("Scan users in first!")
                     return
-            else:
+            elif answ == "0":
                 logins = open("src/db/logins.txt", "r").read().split()
+            elif answ == "b" or answ == "back":
+                return
 
             passwords = open("src/db/passwords.txt", "r").read().split()
 
-        elif db == "1":
+        elif answ == "1":
             path_logins = input("Enter the path to the file with logins: ")
             path_passwords = input("Enter the path to the file with passwords: ")
             try:
@@ -246,6 +327,8 @@ class Menu:
             except FileNotFoundError as e:
                 print("File not found: ", e)
                 return
+        elif answ == "b" or answ == "back":
+            return
 
         self.brute_force.bruteforce(logins, passwords)
 
