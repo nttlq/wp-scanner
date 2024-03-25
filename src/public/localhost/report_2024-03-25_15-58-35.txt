@@ -1,0 +1,17 @@
+[Report]
+URL: http://localhost:5000/
+User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; Trident/6.0)
+WP version: Not found
+Themes: Not found
+Plugins: Not found
+Logins: Not found
+Users: Not found
+Files: Not found
+Usernames: Not found
+Admin: Not found
+Ips: {'localhost'}
+Ports: {'localhost': [{'port': 22, 'service': 'ssh', 'banner': 'SSH-2.0-OpenSSH_for_Windows_8.6'}]}
+All Forms: Not found
+Linked urls: Not found
+Injection urls: Not Found
+Sqli vulnerable urls: Not found

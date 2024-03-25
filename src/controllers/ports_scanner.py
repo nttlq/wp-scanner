@@ -18,21 +18,29 @@ class PortScanner:
 
     @property
     def url(self):
-        url = urlparse(self.__url).netloc
+        try:
+            url = urlparse(self.__url).netloc
+        except Exception as e:
+            url = urlparse(self.__url).hostname
         return url
 
     def is_private_ip(self, IP: str) -> bool:
+        if "localhost" in IP:
+            return True
         return True if (ip_address(IP).is_private) else False
 
-    def get_ips(self) -> list:
+    def get_ips(self) -> dict:
         print("Getting IPs for: ", self.url)
+        if self.is_private_ip(self.__url):
+            self.ips.add(urlparse(self.__url).hostname)
+            return self.ips
         try:
             ips = socket.gethostbyname_ex(self.url)
         except socket.gaierror:
             ips = []
-
         for ip in ips[2]:
             self.ips.add(ip)
+        return self.ips
 
     def banner_grabbing(self, ip, port):
         print("Banner grabbing for port: ", port)
@@ -72,6 +80,7 @@ class PortScanner:
     def scan_ports_in_range(self, port_begin: int, port_end: int):
         print("Scanning ports in range {} - {}".format(port_begin, port_end))
         keyboard.on_press_key("q", self.stop)
+        print("Press 'q' to stop scanning")
 
         if port_begin > port_end:
             temp = port_begin

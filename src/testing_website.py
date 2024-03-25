@@ -99,7 +99,7 @@ def list_users() -> str:
 def start_server():
     global CONNECTION
     CONNECTION = connect()
-    app.run(port=5000, debug=True)
+    app.run(host="localhost", port=5000, debug=True)
 
 
 if __name__ == "__main__":
