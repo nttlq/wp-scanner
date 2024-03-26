@@ -3,12 +3,12 @@ import urllib3
 from utils.printings import Printer
 from utils.ags_parser import parser
 from utils.file_manager import FileManager
-from utils.crawler import Crawler
 
 from controllers.wp_site import WpSite
 from controllers.brute_force import Bruteforce
 from controllers.wps_api import WpsApi
 from controllers.ports_scanner import PortScanner
+from controllers.crawler import Crawler
 from controllers.fuzzing import Fuzzing
 from controllers.sql_injections import SQLInjectionScanner
 from views.menu import Menu

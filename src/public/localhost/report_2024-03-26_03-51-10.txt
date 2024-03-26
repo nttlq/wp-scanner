@@ -1,0 +1,17 @@
+[Report]
+URL: http://localhost:5000/
+User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
+WP version: Not found
+Themes: Not found
+Plugins: Not found
+Logins: Not found
+Users: Not found
+Files: Not found
+Usernames: Not found
+Admin: Not found
+Ips: Not found
+Ports: Not found
+All Forms: [{'action': '/login', 'method': 'get', 'inputs': [{'type': 'text', 'name': 'username', 'value': ''}, {'type': 'password', 'name': 'password', 'value': ''}, {'type': 'submit', 'name': None, 'value': 'Login'}]}, {'action': '/users', 'method': 'get', 'inputs': [{'type': 'text', 'name': 'role', 'value': ''}, {'type': 'submit', 'name': None, 'value': 'List Users'}]}]
+Linked urls: {'http://localhost:5000/'}
+Injection urls: {'http://localhost:5000/login?username=&password=', 'http://localhost:5000/users?role='}
+Sqli vulnerable urls: {"http://localhost:5000/users?role='"}

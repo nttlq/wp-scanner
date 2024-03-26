@@ -85,9 +85,9 @@ class Menu:
                 self.fuzzing_site()
             elif option == "7":
                 self.show_report()
-            elif option == "8":
+            elif option == "8" or option == "help":
                 self.show_help()
-            elif option == "exit" or option == "0":
+            elif option == "0" or option == "exit":
                 break
             elif option == "clear":
                 Menu.clear()
