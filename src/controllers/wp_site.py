@@ -204,7 +204,11 @@ class WpSite:
         print("Detecting usernames...")
         for i in range(1, 10000):
             try:
-                response = requests.get(f"{self.url}?author={i}", verify=False)
+                response = requests.get(
+                    f"{self.url}?author={i}",
+                    headers={"User-Agent": self.__user_agent},
+                    verify=False,
+                )
 
                 if (
                     response.status_code == 404
@@ -226,7 +230,11 @@ class WpSite:
 
         for user in self.usernames.copy():
             try:
-                response = requests.get(f"{self.url}/author/{user}", verify=False)
+                response = requests.get(
+                    f"{self.url}/author/{user}",
+                    headers={"User-Agent": self.__user_agent},
+                    verify=False,
+                )
 
                 if (
                     response.status_code == 404
