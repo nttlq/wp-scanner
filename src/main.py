@@ -4,13 +4,13 @@ from utils.printings import Printer
 from utils.ags_parser import parser
 from utils.file_manager import FileManager
 
-from controllers.wp_site import WpSite
+from controllers.wp_site_scanner import WpSite
 from controllers.brute_force import Bruteforce
 from controllers.wps_api import WpsApi
 from controllers.ports_scanner import PortScanner
 from controllers.crawler import Crawler
 from controllers.fuzzing import Fuzzing
-from controllers.sql_injections import SQLInjectionScanner
+from controllers.sql_injections_scanner import SQLInjectionScanner
 from views.menu import Menu
 
 

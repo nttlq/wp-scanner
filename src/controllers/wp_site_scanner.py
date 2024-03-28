@@ -428,7 +428,7 @@ class WpSite:
         )
         if "200" in str(r) and not "404" in r.text:
             self.add_file("debug.log")
-            print("Debug log file found: %s" % (self.url + "debug.log"))
+            print(f"Debug log file found: {self.url}debug.log")
 
     def detect_backups(self):
         print("Detecting backup files...")

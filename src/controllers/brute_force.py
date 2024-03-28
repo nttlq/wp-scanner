@@ -149,7 +149,7 @@ class Bruteforce:
                         if task.result() == "success":
                             break
 
-    def bruteforce3(self, usernames=False, passwords=False, max_workers=10):
+    def bruteforce_threads(self, usernames=False, passwords=False, max_workers=10):
         print("Starting bruteforce...")
 
         if not usernames:

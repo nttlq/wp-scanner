@@ -31,7 +31,7 @@ class PortScanner:
 
     def get_ips(self) -> dict:
         print("Getting IPs for: ", self.url)
-        if self.is_private_ip(self.__url):
+        if "localhost" in self.url:
             self.ips.add(urlparse(self.__url).hostname)
             return self.ips
         try:
@@ -174,14 +174,17 @@ if __name__ == "__main__":
 
     class WP:
         def __init__(self) -> None:
-            self.url = "https://curse.local/"
+            self.url = "localhost:5000"
             self.ports = {}
+            self.ips = set()
 
     wp_site = WP()
     ports = "80 35 22"
     port = [int(p) for p in ports.split(" ")]
     print("Port: ", port)
     site = ("dfiles.ru", "torquemag.io")
+    site1 = "https://curse.local/"
+    site2 = "curse.local"
     ps = PortScanner(wp_site)
     ips = ps.get_ips()
     print(ps.ips)
